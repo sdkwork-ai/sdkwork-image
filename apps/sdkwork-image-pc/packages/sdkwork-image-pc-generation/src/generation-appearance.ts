@@ -1,7 +1,11 @@
-import type { CSSProperties } from "react";
 import { createSdkworkBackdropStyle, createSdkworkHeroStyle, createSdkworkPanelStyle, createSdkworkToneStyle, type SdkworkThemeVisualTone } from "@sdkwork/ui-pc-react/theme";
 
 export type SdkworkGenerationVisualTone = SdkworkThemeVisualTone;
+export type SdkworkGenerationStyle = Record<string, number | string | undefined>;
+
+function toSdkworkGenerationStyle(style: unknown): SdkworkGenerationStyle {
+  return style as SdkworkGenerationStyle;
+}
 
 export function createSdkworkGenerationToneStyle(
   tone: SdkworkGenerationVisualTone,
@@ -9,8 +13,8 @@ export function createSdkworkGenerationToneStyle(
     backgroundWeight?: number;
     borderWeight?: number;
   } = {},
-): CSSProperties {
-  return createSdkworkToneStyle(tone, options);
+): SdkworkGenerationStyle {
+  return toSdkworkGenerationStyle(createSdkworkToneStyle(tone, options));
 }
 
 export function createSdkworkGenerationPanelStyle(
@@ -21,21 +25,21 @@ export function createSdkworkGenerationPanelStyle(
     surfaceColor?: string;
     surfaceWeight?: number;
   } = {},
-): CSSProperties {
-  return createSdkworkPanelStyle(tone, options);
+): SdkworkGenerationStyle {
+  return toSdkworkGenerationStyle(createSdkworkPanelStyle(tone, options));
 }
 
-export function createSdkworkGenerationBackdropStyle(): CSSProperties {
-  return createSdkworkBackdropStyle();
+export function createSdkworkGenerationBackdropStyle(): SdkworkGenerationStyle {
+  return toSdkworkGenerationStyle(createSdkworkBackdropStyle());
 }
 
-export function createSdkworkGenerationHeroStyle(): CSSProperties {
-  return createSdkworkHeroStyle();
+export function createSdkworkGenerationHeroStyle(): SdkworkGenerationStyle {
+  return toSdkworkGenerationStyle(createSdkworkHeroStyle());
 }
 
 export function createSdkworkGenerationHeroTextStyle(
   tone: "muted" | "primary" | "subtle" = "primary",
-): CSSProperties {
+): SdkworkGenerationStyle {
   if (tone === "muted") {
     return {
       color: "color-mix(in srgb, white 72%, var(--sdk-color-brand-accent))",
