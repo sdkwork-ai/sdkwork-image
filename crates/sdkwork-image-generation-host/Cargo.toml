@@ -17,6 +17,7 @@ sdkwork-image-generation-provider-spi.workspace = true
 sdkwork-image-generation-runtime-service.workspace = true
 sdkwork-image-generation-service.workspace = true
 sdkwork-image-generation-workflow-service.workspace = true
+sdkwork-database-sqlx.workspace = true
 sdkwork-assets-ingestion.workspace = true
 sdkwork-utils-rust.workspace = true
 serde = { workspace = true, features = ["derive"] }

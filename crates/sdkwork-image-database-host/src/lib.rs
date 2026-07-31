@@ -22,6 +22,12 @@ impl ImageDatabaseHost {
 }
 
 pub async fn bootstrap_image_database(pool: DatabasePool) -> Result<ImageDatabaseHost, String> {
+    if pool.as_postgres().is_none() {
+        return Err(
+            "image authoritative-server database requires PostgreSQL; SQLite is client-local only"
+                .to_owned(),
+        );
+    }
     let app_root = resolve_app_root();
     let module = Arc::new(
         DefaultDatabaseModule::from_app_root(&app_root)
@@ -30,8 +36,8 @@ pub async fn bootstrap_image_database(pool: DatabasePool) -> Result<ImageDatabas
     let manifest = DatabaseManifest::from_file(module.manifest_path())
         .map_err(|error| format!("read image database manifest failed: {error}"))?;
     let options = lifecycle_options_from_env("IMAGE", &manifest);
-    let orchestrator = LifecycleOrchestrator::new(pool.clone(), module.clone())
-        .with_applied_by("sdkwork-image");
+    let orchestrator =
+        LifecycleOrchestrator::new(pool.clone(), module.clone()).with_applied_by("sdkwork-image");
 
     orchestrator
         .init()

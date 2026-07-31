@@ -5,8 +5,8 @@ use parking_lot::RwLock;
 
 use super::{
     ImageAssetRecord, ImageCatalogRepository, ImageCatalogScope, ImageEditTaskCreateCommand,
-    ImageEditTaskRecord, ImageGalleryItemCreateCommand, ImageGalleryItemRecord,
-    ImageGalleryRecord, ImagePresetRecord,
+    ImageEditTaskRecord, ImageGalleryItemCreateCommand, ImageGalleryItemRecord, ImageGalleryRecord,
+    ImagePresetRecord,
 };
 use crate::RepositoryError;
 

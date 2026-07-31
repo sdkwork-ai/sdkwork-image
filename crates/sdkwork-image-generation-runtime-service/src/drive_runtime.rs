@@ -2,7 +2,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use sdkwork_assets_ingestion::DriveImportPlan;
-use sdkwork_database_sqlx::{create_any_pool_from_config, DatabasePool};
 use sdkwork_drive_storage_local::LocalDriveObjectStore;
 use sdkwork_drive_workspace_service::bootstrap::{
     bootstrap_drive_database, connect_drive_database_pool_from_env,
@@ -39,12 +38,15 @@ impl ImageDriveImportRuntime {
         bootstrap_drive_database(drive_pool.clone())
             .await
             .map_err(|error| error.to_string())?;
-        let any_pool = pool_to_any(drive_pool).await?;
+        let drive_pool = drive_pool
+            .as_postgres()
+            .cloned()
+            .ok_or_else(|| "image Drive import requires a PostgreSQL database pool".to_string())?;
         let object_store_root = object_store_root_from_env();
         std::fs::create_dir_all(&object_store_root).map_err(|error| error.to_string())?;
         let fetcher = HttpProviderArtifactFetcher::new()?;
         Ok(Some(Arc::new(Self {
-            uploader: DriveUploaderService::new(SqlUploaderStore::new(any_pool)),
+            uploader: DriveUploaderService::new(SqlUploaderStore::new(drive_pool)),
             object_store: LocalDriveObjectStore::new(object_store_root),
             fetcher,
         })))
@@ -97,10 +99,4 @@ fn object_store_root_from_env() -> PathBuf {
     std::env::var("IMAGE_DRIVE_OBJECT_STORE_ROOT")
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from(".data/image-drive-objects"))
-}
-
-async fn pool_to_any(pool: DatabasePool) -> Result<sqlx::AnyPool, String> {
-    create_any_pool_from_config(pool.config().clone())
-        .await
-        .map_err(|error| error.to_string())
 }

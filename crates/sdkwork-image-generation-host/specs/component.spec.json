@@ -34,7 +34,10 @@
       { "name": "imageGenerationProvider", "export": "." },
       { "name": "generationProjectionRepository", "export": "." }
     ],
-    "runtimeEntrypoints": ["ImageGenerationHost::from_runtime_env"],
+    "runtimeEntrypoints": [
+      "ImageGenerationHost::from_runtime_env",
+      "ImageGenerationHost::from_pool"
+    ],
     "routeManifest": null,
     "sdkClients": ["SdkworkAiClient"],
     "sdkDependencies": [

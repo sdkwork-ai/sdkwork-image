@@ -13,9 +13,7 @@ use sdkwork_image_generation_host::{
 use sdkwork_web_core::WebRequestContext;
 use serde::Deserialize;
 
-use crate::api_response::{
-    map_catalog_error, map_service_error, success_item, success_items,
-};
+use crate::api_response::{map_catalog_error, map_service_error, success_item, success_items};
 use crate::subject::runtime_subject_from_extension;
 
 #[derive(Clone)]
@@ -34,7 +32,10 @@ pub fn build_image_app_router(host: Arc<ImageGenerationHost>) -> Router {
     Router::new()
         .route("/app/v3/api/image/presets", get(list_presets))
         .route("/app/v3/api/image/presets/{presetId}", get(retrieve_preset))
-        .route("/app/v3/api/image/generations", get(list_generations).post(create_generation))
+        .route(
+            "/app/v3/api/image/generations",
+            get(list_generations).post(create_generation),
+        )
         .route(
             "/app/v3/api/image/generations/{generationId}",
             get(retrieve_generation),
@@ -48,11 +49,17 @@ pub fn build_image_app_router(host: Arc<ImageGenerationHost>) -> Router {
             post(cancel_generation),
         )
         .route("/app/v3/api/image/edit_tasks", post(create_edit_task))
-        .route("/app/v3/api/image/edit_tasks/{taskId}", get(retrieve_edit_task))
+        .route(
+            "/app/v3/api/image/edit_tasks/{taskId}",
+            get(retrieve_edit_task),
+        )
         .route("/app/v3/api/image/assets", get(list_assets))
         .route("/app/v3/api/image/assets/{assetId}", get(retrieve_asset))
         .route("/app/v3/api/image/galleries", get(list_galleries))
-        .route("/app/v3/api/image/galleries/{galleryId}", get(retrieve_gallery))
+        .route(
+            "/app/v3/api/image/galleries/{galleryId}",
+            get(retrieve_gallery),
+        )
         .route(
             "/app/v3/api/image/galleries/{galleryId}/items",
             post(create_gallery_item),
@@ -105,9 +112,7 @@ async fn list_generations(
         .await
     {
         Ok(items) => items,
-        Err(error) => {
-            return map_service_error(context.as_ref().map(|Extension(ctx)| ctx), error)
-        }
+        Err(error) => return map_service_error(context.as_ref().map(|Extension(ctx)| ctx), error),
     };
     let total = items.len() as i64;
     success_items(
@@ -249,7 +254,12 @@ async fn retrieve_preset(
             )
         }
     };
-    match state.host.catalog().get_preset(&subject, preset_id.trim()).await {
+    match state
+        .host
+        .catalog()
+        .get_preset(&subject, preset_id.trim())
+        .await
+    {
         Ok(item) => success_item(context.as_ref().map(|Extension(ctx)| ctx), item),
         Err(error) => map_catalog_error(context.as_ref().map(|Extension(ctx)| ctx), error),
     }
@@ -305,7 +315,12 @@ async fn retrieve_asset(
             )
         }
     };
-    match state.host.catalog().get_asset(&subject, asset_id.trim()).await {
+    match state
+        .host
+        .catalog()
+        .get_asset(&subject, asset_id.trim())
+        .await
+    {
         Ok(item) => success_item(context.as_ref().map(|Extension(ctx)| ctx), item),
         Err(error) => map_catalog_error(context.as_ref().map(|Extension(ctx)| ctx), error),
     }
@@ -438,7 +453,12 @@ async fn create_edit_task(
         Ok(command) => command,
         Err(error) => return map_catalog_error(context.as_ref().map(|Extension(ctx)| ctx), error),
     };
-    match state.host.catalog().create_edit_task(&subject, command).await {
+    match state
+        .host
+        .catalog()
+        .create_edit_task(&subject, command)
+        .await
+    {
         Ok(item) => success_item(context.as_ref().map(|Extension(ctx)| ctx), item),
         Err(error) => map_catalog_error(context.as_ref().map(|Extension(ctx)| ctx), error),
     }
@@ -459,7 +479,12 @@ async fn retrieve_edit_task(
             )
         }
     };
-    match state.host.catalog().get_edit_task(&subject, task_id.trim()).await {
+    match state
+        .host
+        .catalog()
+        .get_edit_task(&subject, task_id.trim())
+        .await
+    {
         Ok(item) => success_item(context.as_ref().map(|Extension(ctx)| ctx), item),
         Err(error) => map_catalog_error(context.as_ref().map(|Extension(ctx)| ctx), error),
     }

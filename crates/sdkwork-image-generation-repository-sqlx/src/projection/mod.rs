@@ -1,22 +1,22 @@
+mod background;
 mod lifecycle;
 mod memory;
 mod scope;
 mod sqlx_store;
-mod background;
 
-pub use memory::InMemoryGenerationProjectionRepository;
-pub use scope::{actor_user_id, parse_scope_id};
 pub use background::{
     DueProviderTaskRow, ImageGenerationBackgroundRepository, PendingNotificationRow,
     SqlxImageGenerationBackgroundRepository,
 };
+pub use memory::InMemoryGenerationProjectionRepository;
+pub use scope::{actor_user_id, parse_scope_id};
 pub use sqlx_store::SqlxGenerationProjectionRepository;
 
 use async_trait::async_trait;
 use sdkwork_image_generation_service::ImageProviderDispatchPlan;
 use sdkwork_image_generation_workflow_service::{
-    rehydrate_image_provider_dispatch_plan, ImageGenerationPersistencePlan,
-    ImageGenerationScope, ImageProviderRequestSnapshot,
+    rehydrate_image_provider_dispatch_plan, ImageGenerationPersistencePlan, ImageGenerationScope,
+    ImageProviderRequestSnapshot,
 };
 
 use crate::RepositoryError;

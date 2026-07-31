@@ -1,7 +1,9 @@
 use async_trait::async_trait;
 use reqwest::Url;
 
-use crate::provider_fetch::{ProviderArtifactContent, ProviderArtifactFetcher, ProviderArtifactRef};
+use crate::provider_fetch::{
+    ProviderArtifactContent, ProviderArtifactFetcher, ProviderArtifactRef,
+};
 
 #[derive(Clone, Debug)]
 pub struct HttpProviderArtifactFetcher {
@@ -31,7 +33,8 @@ impl HttpProviderArtifactFetcher {
         let raw = provider_url
             .or(provider_uri)
             .ok_or_else(|| "provider artifact url is required".to_string())?;
-        let url = Url::parse(raw).map_err(|error| format!("invalid provider artifact url: {error}"))?;
+        let url =
+            Url::parse(raw).map_err(|error| format!("invalid provider artifact url: {error}"))?;
         match url.scheme() {
             "http" | "https" => Ok(url),
             _ => Err("provider artifact url must use http or https".to_string()),

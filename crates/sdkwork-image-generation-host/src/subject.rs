@@ -26,7 +26,9 @@ pub fn runtime_subject_from_iam(context: &IamAppContext) -> Result<RuntimeSubjec
 fn required_text(value: &str, field_name: &'static str) -> Result<String, String> {
     let value = value.trim();
     if value.is_empty() {
-        return Err(format!("authenticated runtime context {field_name} is required"));
+        return Err(format!(
+            "authenticated runtime context {field_name} is required"
+        ));
     }
     Ok(value.to_owned())
 }

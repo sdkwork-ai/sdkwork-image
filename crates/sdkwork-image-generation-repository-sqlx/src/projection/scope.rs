@@ -20,7 +20,9 @@ pub fn actor_user_id(actor: &ImageGenerationActor) -> Result<i64, RepositoryErro
     }
 }
 
-pub fn organization_id(scope: &sdkwork_image_generation_workflow_service::ImageGenerationScope) -> Result<i64, RepositoryError> {
+pub fn organization_id(
+    scope: &sdkwork_image_generation_workflow_service::ImageGenerationScope,
+) -> Result<i64, RepositoryError> {
     match scope.organization_id.as_deref() {
         Some(value) if !value.trim().is_empty() => parse_scope_id(value, "organization_id"),
         _ => Ok(0),

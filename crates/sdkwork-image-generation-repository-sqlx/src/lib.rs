@@ -8,18 +8,17 @@ pub use bootstrap::{
     connect_and_bootstrap_image_database_from_env, connect_image_database_pool_from_env,
     ImageDatabaseHost, ImageDatabasePool,
 };
+pub use catalog::{
+    ImageAssetRecord, ImageCatalogRepository, ImageCatalogScope, ImageEditTaskCreateCommand,
+    ImageEditTaskRecord, ImageGalleryItemCreateCommand, ImageGalleryItemRecord, ImageGalleryRecord,
+    ImagePresetRecord, InMemoryImageCatalogRepository, SqlxImageCatalogRepository,
+};
 pub use error::RepositoryError;
 pub use projection::{
     actor_user_id, parse_scope_id, DueProviderTaskRow, GenerationProjectionRecord,
     GenerationProjectionRepository, ImageGenerationBackgroundRepository,
     InMemoryGenerationProjectionRepository, PendingNotificationRow,
     SqlxGenerationProjectionRepository, SqlxImageGenerationBackgroundRepository,
-};
-pub use catalog::{
-    ImageAssetRecord, ImageCatalogRepository, ImageCatalogScope, ImageEditTaskCreateCommand,
-    ImageEditTaskRecord, ImageGalleryItemCreateCommand, ImageGalleryItemRecord,
-    ImageGalleryRecord, ImagePresetRecord, InMemoryImageCatalogRepository,
-    SqlxImageCatalogRepository,
 };
 
 pub const IMAGE_INITIAL_MIGRATION: &str = "0001_image_foundation.sql";

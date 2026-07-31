@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use clawrouter_open_sdk::{SdkworkAiClient, SdkworkConfig};
+use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_image_generation_provider_adapter::{
     ImageGenerationProviderAdapter, IMAGE_GENERATION_PROVIDER_ADAPTER_ID,
 };
 use sdkwork_image_generation_repository_sqlx::{
-    connect_and_bootstrap_image_database_from_env, GenerationProjectionRepository,
+    bootstrap_image_database, connect_image_database_pool_from_env, GenerationProjectionRepository,
     ImageGenerationBackgroundRepository, InMemoryGenerationProjectionRepository,
     InMemoryImageCatalogRepository, SqlxGenerationProjectionRepository, SqlxImageCatalogRepository,
     SqlxImageGenerationBackgroundRepository,
@@ -25,6 +26,7 @@ pub struct ImageGenerationHost {
     catalog: Arc<ImageCatalogService>,
     provider_service: Arc<ProviderGenerationService>,
     background: Option<Arc<dyn ImageGenerationBackgroundRepository>>,
+    database_pool: Option<DatabasePool>,
 }
 
 impl ImageGenerationHost {
@@ -37,6 +39,26 @@ impl ImageGenerationHost {
         >,
         background: Option<Arc<dyn ImageGenerationBackgroundRepository>>,
     ) -> Arc<Self> {
+        Self::build(
+            provider_service,
+            store,
+            catalog_store,
+            drive_import,
+            background,
+            None,
+        )
+    }
+
+    fn build(
+        provider_service: Arc<ProviderGenerationService>,
+        store: Arc<dyn GenerationProjectionRepository>,
+        catalog_store: Arc<dyn sdkwork_image_generation_repository_sqlx::ImageCatalogRepository>,
+        drive_import: Option<
+            Arc<sdkwork_image_generation_runtime_service::ImageDriveImportRuntime>,
+        >,
+        background: Option<Arc<dyn ImageGenerationBackgroundRepository>>,
+        database_pool: Option<DatabasePool>,
+    ) -> Arc<Self> {
         Arc::new(Self {
             service: Arc::new(ImageGenerationService::new(
                 provider_service.clone(),
@@ -46,6 +68,7 @@ impl ImageGenerationHost {
             catalog: Arc::new(ImageCatalogService::new(catalog_store)),
             provider_service,
             background,
+            database_pool,
         })
     }
 
@@ -78,23 +101,35 @@ impl ImageGenerationHost {
     }
 
     pub async fn from_runtime_env() -> Result<Arc<Self>, String> {
+        let pool = connect_image_database_pool_from_env()
+            .await
+            .map_err(|error| format!("create image database pool failed: {error}"))?;
+        Self::from_pool(pool).await
+    }
+
+    pub async fn from_pool(pool: DatabasePool) -> Result<Arc<Self>, String> {
         let provider_service = provider_service_from_env()?;
-        let database = connect_and_bootstrap_image_database_from_env().await?;
+        let database = bootstrap_image_database(pool).await?;
         let pool = database.pool().clone();
         let store = SqlxGenerationProjectionRepository::new(pool.clone());
         let catalog_store = SqlxImageCatalogRepository::new(pool.clone());
         let background: Arc<dyn ImageGenerationBackgroundRepository> =
-            SqlxImageGenerationBackgroundRepository::new(pool);
+            SqlxImageGenerationBackgroundRepository::new(pool.clone());
         let drive_import =
             sdkwork_image_generation_runtime_service::ImageDriveImportRuntime::try_from_env()
                 .await?;
-        Ok(Self::new(
+        Ok(Self::build(
             provider_service,
             store,
             catalog_store,
             drive_import,
             Some(background),
+            Some(pool),
         ))
+    }
+
+    pub fn database_pool(&self) -> Option<DatabasePool> {
+        self.database_pool.clone()
     }
 
     pub fn service(&self) -> Arc<ImageGenerationService> {

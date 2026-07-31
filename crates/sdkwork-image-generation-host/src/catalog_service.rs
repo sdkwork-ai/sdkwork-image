@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use sdkwork_image_generation_repository_sqlx::{
     ImageAssetRecord, ImageCatalogRepository, ImageCatalogScope, ImageEditTaskCreateCommand,
-    ImageEditTaskRecord, ImageGalleryItemCreateCommand, ImageGalleryItemRecord,
-    ImageGalleryRecord, ImagePresetRecord, RepositoryError,
+    ImageEditTaskRecord, ImageGalleryItemCreateCommand, ImageGalleryItemRecord, ImageGalleryRecord,
+    ImagePresetRecord, RepositoryError,
 };
 
 use crate::subject::RuntimeSubject;
@@ -36,12 +36,7 @@ impl ImageCatalogService {
     ) -> Result<Vec<ImagePresetRecord>, ImageCatalogServiceError> {
         let offset = (page.max(1) - 1) * page_size;
         self.store
-            .list_presets(
-                &catalog_scope(subject),
-                page_size,
-                offset,
-                q.as_deref(),
-            )
+            .list_presets(&catalog_scope(subject), page_size, offset, q.as_deref())
             .await
             .map_err(map_catalog_error)
     }
@@ -67,12 +62,7 @@ impl ImageCatalogService {
     ) -> Result<Vec<ImageAssetRecord>, ImageCatalogServiceError> {
         let offset = (page.max(1) - 1) * page_size;
         self.store
-            .list_assets(
-                &catalog_scope(subject),
-                page_size,
-                offset,
-                q.as_deref(),
-            )
+            .list_assets(&catalog_scope(subject), page_size, offset, q.as_deref())
             .await
             .map_err(map_catalog_error)
     }
@@ -98,12 +88,7 @@ impl ImageCatalogService {
     ) -> Result<Vec<ImageGalleryRecord>, ImageCatalogServiceError> {
         let offset = (page.max(1) - 1) * page_size;
         self.store
-            .list_galleries(
-                &catalog_scope(subject),
-                page_size,
-                offset,
-                q.as_deref(),
-            )
+            .list_galleries(&catalog_scope(subject), page_size, offset, q.as_deref())
             .await
             .map_err(map_catalog_error)
     }
@@ -173,8 +158,8 @@ fn map_catalog_error(error: RepositoryError) -> ImageCatalogServiceError {
     match error {
         RepositoryError::NotFound => ImageCatalogServiceError::NotFound,
         RepositoryError::Validation(message) => ImageCatalogServiceError::Validation(message),
-        RepositoryError::Conflict(message) | RepositoryError::Database(message) | RepositoryError::Serialization(message) => {
-            ImageCatalogServiceError::Persistence(message)
-        }
+        RepositoryError::Conflict(message)
+        | RepositoryError::Database(message)
+        | RepositoryError::Serialization(message) => ImageCatalogServiceError::Persistence(message),
     }
 }

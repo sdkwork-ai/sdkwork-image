@@ -1,6 +1,6 @@
 use axum::Extension;
 use sdkwork_iam_context_service::IamAppContext;
-use sdkwork_image_generation_host::{RuntimeSubject, runtime_subject_from_iam};
+use sdkwork_image_generation_host::{runtime_subject_from_iam, RuntimeSubject};
 
 pub fn runtime_subject_from_extension(
     context: Option<Extension<IamAppContext>>,

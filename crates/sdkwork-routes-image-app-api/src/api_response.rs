@@ -15,10 +15,7 @@ pub fn resolve_trace_id(context: Option<&WebRequestContext>) -> String {
         .unwrap_or_else(sdkwork_utils_rust::uuid)
 }
 
-pub fn success_item<T: serde::Serialize>(
-    context: Option<&WebRequestContext>,
-    item: T,
-) -> Response {
+pub fn success_item<T: serde::Serialize>(context: Option<&WebRequestContext>, item: T) -> Response {
     let trace_id = resolve_trace_id(context);
     let envelope = SdkWorkApiResponse::success(SdkWorkResourceData { item }, trace_id.clone());
     attach_trace_header((StatusCode::OK, Json(envelope)).into_response(), &trace_id)
@@ -70,12 +67,10 @@ pub fn map_service_error(
         ImageGenerationServiceError::Conflict(_) => {
             (StatusCode::CONFLICT, SdkWorkResultCode::Conflict)
         }
-        ImageGenerationServiceError::Persistence(_) => {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                SdkWorkResultCode::InternalError,
-            )
-        }
+        ImageGenerationServiceError::Persistence(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            SdkWorkResultCode::InternalError,
+        ),
     };
     let problem = SdkWorkProblemDetail::platform(result_code, error.to_string(), trace_id.clone());
     attach_trace_header((status, Json(problem)).into_response(), &trace_id)
@@ -90,15 +85,11 @@ pub fn map_catalog_error(
         ImageCatalogServiceError::Validation(_) => {
             (StatusCode::BAD_REQUEST, SdkWorkResultCode::ValidationError)
         }
-        ImageCatalogServiceError::NotFound => {
-            (StatusCode::NOT_FOUND, SdkWorkResultCode::NotFound)
-        }
-        ImageCatalogServiceError::Persistence(_) => {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                SdkWorkResultCode::InternalError,
-            )
-        }
+        ImageCatalogServiceError::NotFound => (StatusCode::NOT_FOUND, SdkWorkResultCode::NotFound),
+        ImageCatalogServiceError::Persistence(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            SdkWorkResultCode::InternalError,
+        ),
     };
     let problem = SdkWorkProblemDetail::platform(result_code, error.to_string(), trace_id.clone());
     attach_trace_header((status, Json(problem)).into_response(), &trace_id)

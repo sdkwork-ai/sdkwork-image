@@ -21,7 +21,6 @@ sdkwork-assets-ingestion-drive.workspace = true
 sdkwork-drive-workspace-service.workspace = true
 sdkwork-drive-storage-local = { workspace = true }
 sdkwork-drive-storage-contract = { workspace = true }
-sqlx = { version = "0.8", default-features = false, features = ["any"] }
 thiserror = "2"
 tracing = "0.1"
 

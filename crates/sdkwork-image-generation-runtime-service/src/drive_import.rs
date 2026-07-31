@@ -3,15 +3,15 @@ use sdkwork_assets_bridge_image::{
 };
 use sdkwork_assets_ingestion::DriveImportPlan;
 use sdkwork_assets_ingestion_drive::{
-    build_prepare_commands_for_import_plan, build_upload_bytes_command, DriveImportExecutionContext,
-    DriveUploaderContext,
+    build_prepare_commands_for_import_plan, build_upload_bytes_command,
+    DriveImportExecutionContext, DriveUploaderContext,
 };
 use sdkwork_drive_storage_contract::DriveObjectStore;
 use sdkwork_drive_workspace_service::ports::uploader_store::DriveUploaderStore;
 use sdkwork_drive_workspace_service::uploader::DriveUploaderService;
 use sdkwork_image_generation_service::{
-    DriveGeneratedMediaContext, DriveGeneratedMediaImportPlan, GeneratedMediaOutput, IMAGE_WORKSPACE,
-    ImageGenerationActor,
+    DriveGeneratedMediaContext, DriveGeneratedMediaImportPlan, GeneratedMediaOutput,
+    ImageGenerationActor, IMAGE_WORKSPACE,
 };
 
 use crate::provider_fetch::{ProviderArtifactFetcher, ProviderArtifactRef};
@@ -55,8 +55,9 @@ pub fn plan_drive_upload_preparations(
         scene: drive_import_plans[0].scene.clone(),
         actor: actor.clone(),
     };
-    let assets_plan = plan_unified_assets_drive_import_from_image(&context, operation_type, outputs)
-        .map_err(|_| ImageRuntimeError::Planning("unified assets drive import plan failed"))?;
+    let assets_plan =
+        plan_unified_assets_drive_import_from_image(&context, operation_type, outputs)
+            .map_err(|_| ImageRuntimeError::Planning("unified assets drive import plan failed"))?;
     let execution = build_drive_import_execution_context(
         context.tenant_id.clone(),
         context.organization_id.clone(),

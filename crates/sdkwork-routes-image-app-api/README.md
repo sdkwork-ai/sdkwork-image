@@ -18,13 +18,15 @@ Gateway assembly injects `Arc<ImageGenerationHost>` and optionally starts the ba
 ```rust
 // Production: ClawRouter + IMAGE database + optional DRIVE import + background processor
 let assembly = assemble_api_router_from_env().await?;
-// assembly.background_processor holds the tokio task when IMAGE_BACKGROUND_PROCESSOR_ENABLED (default true)
+// assembly.contribution is consumed intact by the selected gateway profile.
+// assembly.background_processor holds the task when IMAGE_BACKGROUND_PROCESSOR_ENABLED (default true).
 
-// Tests / custom wiring
-let host = ImageGenerationHost::for_test(gateway);
-let assembly = assemble_api_router(host).await;
+// Embedded gateways inject their process-shared database pool.
+let assembly = assemble_api_router_with_pool(database_pool).await?;
 ```
 
-Handlers are mounted through `gateway_mount(host).await`, which wraps the router with IAM/web-framework layers from environment.
+The assembly mounts the unwrapped business router. The selected standalone or cloud gateway merges
+its route manifest, OpenAPI, permission catalog, domain injectors, and readiness check before
+installing Web Framework infrastructure once for the process.
 
 Machine-readable contract: `specs/component.spec.json`. Standards: `../../../../sdkwork-specs/`.

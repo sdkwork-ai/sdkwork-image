@@ -1,8 +1,8 @@
+use sdkwork_image_generation_runtime_service::plan_drive_upload_preparations;
 use sdkwork_image_generation_service::{
     plan_drive_import_for_generated_outputs, DriveGeneratedMediaContext, GeneratedMediaKind,
-    GeneratedMediaOutput, IMAGE_WORKSPACE, ImageGenerationActor,
+    GeneratedMediaOutput, ImageGenerationActor, IMAGE_WORKSPACE,
 };
-use sdkwork_image_generation_runtime_service::plan_drive_upload_preparations;
 
 #[test]
 fn plans_drive_upload_preparations_from_image_drive_import_plans() {
@@ -48,8 +48,5 @@ fn plans_drive_upload_preparations_from_image_drive_import_plans() {
     assert_eq!(preparations[0].output_index, 0);
     assert_eq!(preparations[0].prepare.app_id, IMAGE_WORKSPACE);
     assert_eq!(preparations[0].prepare.upload_profile_code, "image");
-    assert_eq!(
-        preparations[0].prepare.app_resource_id,
-        "generation-001:0"
-    );
+    assert_eq!(preparations[0].prepare.app_resource_id, "generation-001:0");
 }

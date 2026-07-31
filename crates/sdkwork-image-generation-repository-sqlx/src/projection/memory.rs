@@ -22,10 +22,7 @@ impl InMemoryGenerationProjectionRepository {
 #[async_trait]
 impl GenerationProjectionRepository for InMemoryGenerationProjectionRepository {
     async fn insert(&self, record: GenerationProjectionRecord) -> Result<(), RepositoryError> {
-        let key = (
-            record.scope.tenant_id.clone(),
-            record.generation_id.clone(),
-        );
+        let key = (record.scope.tenant_id.clone(), record.generation_id.clone());
         self.records.write().insert(key, record);
         Ok(())
     }
