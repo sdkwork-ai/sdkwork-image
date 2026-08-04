@@ -9,7 +9,7 @@ name = "sdkwork_image_generation_host"
 path = "src/lib.rs"
 
 [dependencies]
-clawrouter-open-sdk.workspace = true
+cloudrouter-open-sdk.workspace = true
 sdkwork-iam-context-service.workspace = true
 sdkwork-image-generation-repository-sqlx.workspace = true
 sdkwork-image-generation-provider-adapter.workspace = true

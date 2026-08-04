@@ -1,4 +1,4 @@
-use clawrouter_open_sdk::{
+use cloudrouter_open_sdk::{
     MidjourneyImageGenerationRequest, NanoBananaImageGenerationRequest,
     OpenAiImageGenerationRequest, ViduReferenceToImageRequest,
 };

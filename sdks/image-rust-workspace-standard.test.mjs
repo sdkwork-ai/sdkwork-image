@@ -53,13 +53,13 @@ test("image Rust workspace uses standard crates layout and names", () => {
   for (const forbidden of [
     "sdkwork_image_core",
     "sdkwork_image_service",
-    "sdkwork_image_provider_claw_router",
+    "sdkwork_image_provider_cloud_router",
     "sdkwork_image_storage_sqlx",
     "sdkwork_image_http",
     "sdkwork-image-core-rust",
     "sdkwork-image-service-rust",
-    "sdkwork-image-provider-claw-router-rust",
-    "sdkwork-image-claw-router-provider-service",
+    "sdkwork-image-provider-cloud-router-rust",
+    "sdkwork-image-cloud-router-provider-service",
     "sdkwork-image-storage-sqlx-rust",
     "sdkwork-image-http-rust",
   ]) {

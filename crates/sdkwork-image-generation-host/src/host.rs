@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use clawrouter_open_sdk::{SdkworkAiClient, SdkworkConfig};
+use cloudrouter_open_sdk::{SdkworkAiClient, SdkworkConfig};
 use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_image_generation_provider_adapter::{
     ImageGenerationProviderAdapter, IMAGE_GENERATION_PROVIDER_ADAPTER_ID,
@@ -157,15 +157,15 @@ impl ImageGenerationHost {
 }
 
 fn provider_service_from_env() -> Result<Arc<ProviderGenerationService>, String> {
-    let base_url = std::env::var("SDKWORK_CLAWROUTER_OPEN_API_BASE_URL")
-        .or_else(|_| std::env::var("CLAWROUTER_OPEN_API_BASE_URL"))
+    let base_url = std::env::var("SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL")
+        .or_else(|_| std::env::var("CLOUDROUTER_OPEN_API_BASE_URL"))
         .map_err(|_| {
-            "SDKWORK_CLAWROUTER_OPEN_API_BASE_URL (or CLAWROUTER_OPEN_API_BASE_URL) is required"
+            "SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL (or CLOUDROUTER_OPEN_API_BASE_URL) is required"
                 .to_string()
         })?;
     let client = SdkworkAiClient::new(SdkworkConfig::new(base_url.trim()))
-        .map_err(|error| format!("claw router client init failed: {error}"))?;
-    if let Ok(api_key) = std::env::var("SDKWORK_CLAWROUTER_OPEN_API_KEY") {
+        .map_err(|error| format!("cloud router client init failed: {error}"))?;
+    if let Ok(api_key) = std::env::var("SDKWORK_CLOUDROUTER_OPEN_API_KEY") {
         if !api_key.trim().is_empty() {
             client.set_api_key(api_key.trim());
         }

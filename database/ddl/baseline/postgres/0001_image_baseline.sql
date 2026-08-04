@@ -306,7 +306,7 @@ CREATE TABLE IF NOT EXISTS image_provider_binding (
     provider_display_name VARCHAR(255) NOT NULL,
     capability_code VARCHAR(128) NOT NULL,
     route_profile VARCHAR(128) NOT NULL,
-    claw_router_provider_code VARCHAR(128),
+    cloud_router_provider_code VARCHAR(128),
     task_mode VARCHAR(64) NOT NULL DEFAULT 'sync',
     webhook_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     polling_enabled BOOLEAN NOT NULL DEFAULT TRUE,

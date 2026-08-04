@@ -22,5 +22,5 @@ pub use routing::{
     resolve_sdk_operation_route, SdkOperationRoute, IMAGE_GENERATION_PROVIDER_ADAPTER_ID,
 };
 
-pub const IMAGE_GENERATION_SDK_CRATE: &str = "clawrouter_open_sdk";
+pub const IMAGE_GENERATION_SDK_CRATE: &str = "cloudrouter_open_sdk";
 pub const IMAGE_GENERATION_SDK_METHOD: &str = "images.create_generation";

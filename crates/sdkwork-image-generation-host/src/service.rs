@@ -550,8 +550,8 @@ mod tests {
 
     #[test]
     fn service_accepts_injected_provider_service_and_in_memory_repository() {
-        let client = clawrouter_open_sdk::SdkworkAiClient::new(
-            clawrouter_open_sdk::SdkworkConfig::new("http://127.0.0.1:0"),
+        let client = cloudrouter_open_sdk::SdkworkAiClient::new(
+            cloudrouter_open_sdk::SdkworkConfig::new("http://127.0.0.1:0"),
         )
         .expect("client");
         let provider = Arc::new(

@@ -57,7 +57,7 @@ crates/sdkwork-image-generation-host/
 
 ## 5. API, SDK, And Data Ownership
 
-The generated ClawRouter open SDK remains dependency-owned. It is consumed directly only by the
+The generated CloudRouter open SDK remains dependency-owned. It is consumed directly only by the
 provider adapter and runtime composition root; generated files are not edited or copied. Persistent
 provider snapshots store provider id, vendor code, semantic operation, model, task mode, common
 parameters, and task identifiers. They do not store generated SDK route or method identifiers.

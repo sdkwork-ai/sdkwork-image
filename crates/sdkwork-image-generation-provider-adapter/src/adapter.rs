@@ -1,4 +1,4 @@
-use clawrouter_open_sdk::SdkworkAiClient;
+use cloudrouter_open_sdk::SdkworkAiClient;
 use sdkwork_image_generation_provider_spi::{
     normalize_openai_image_generation_outputs, normalize_provider_task_generation_result,
     ImageGenerationCommand, ImageGenerationProvider, ImageGenerationProviderCapability,
@@ -283,34 +283,34 @@ impl ImageGenerationProvider for ImageGenerationProviderAdapter {
     }
 }
 
-fn map_sdk_error(error: clawrouter_open_sdk::SdkworkError) -> ImageGenerationProviderError {
+fn map_sdk_error(error: cloudrouter_open_sdk::SdkworkError) -> ImageGenerationProviderError {
     match error {
-        clawrouter_open_sdk::SdkworkError::Http(error) if error.is_timeout() => {
+        cloudrouter_open_sdk::SdkworkError::Http(error) if error.is_timeout() => {
             ImageGenerationProviderError::Timeout(error.to_string())
         }
-        clawrouter_open_sdk::SdkworkError::Http(error) => {
+        cloudrouter_open_sdk::SdkworkError::Http(error) => {
             ImageGenerationProviderError::Transport(error.to_string())
         }
-        clawrouter_open_sdk::SdkworkError::HttpStatus { status: 408, body } => {
+        cloudrouter_open_sdk::SdkworkError::HttpStatus { status: 408, body } => {
             ImageGenerationProviderError::Timeout(body)
         }
-        clawrouter_open_sdk::SdkworkError::HttpStatus { status: 429, body } => {
+        cloudrouter_open_sdk::SdkworkError::HttpStatus { status: 429, body } => {
             ImageGenerationProviderError::RateLimited(body)
         }
-        clawrouter_open_sdk::SdkworkError::HttpStatus { status, body } if status >= 500 => {
+        cloudrouter_open_sdk::SdkworkError::HttpStatus { status, body } if status >= 500 => {
             ImageGenerationProviderError::ProviderUnavailable(format!(
                 "http status {status}: {body}"
             ))
         }
-        clawrouter_open_sdk::SdkworkError::HttpStatus { status, body } => {
+        cloudrouter_open_sdk::SdkworkError::HttpStatus { status, body } => {
             ImageGenerationProviderError::Rejected(format!("http status {status}: {body}"))
         }
-        clawrouter_open_sdk::SdkworkError::Serialization(error) => {
+        cloudrouter_open_sdk::SdkworkError::Serialization(error) => {
             ImageGenerationProviderError::InvalidProviderResponse(error.to_string())
         }
-        error @ (clawrouter_open_sdk::SdkworkError::InvalidHeaderName(_)
-        | clawrouter_open_sdk::SdkworkError::InvalidHeaderValue(_)
-        | clawrouter_open_sdk::SdkworkError::InvalidHttpMethod(_)) => {
+        error @ (cloudrouter_open_sdk::SdkworkError::InvalidHeaderName(_)
+        | cloudrouter_open_sdk::SdkworkError::InvalidHeaderValue(_)
+        | cloudrouter_open_sdk::SdkworkError::InvalidHttpMethod(_)) => {
             ImageGenerationProviderError::Configuration(error.to_string())
         }
     }

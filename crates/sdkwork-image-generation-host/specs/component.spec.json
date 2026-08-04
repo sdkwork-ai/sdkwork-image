@@ -42,7 +42,7 @@
     "sdkClients": ["SdkworkAiClient"],
     "sdkDependencies": [
       {
-        "workspace": "clawrouter-open-sdk",
+        "workspace": "cloudrouter-open-sdk",
         "surface": "open-api",
         "credentialMode": "open-api-key",
         "required": true
@@ -52,9 +52,9 @@
     "dependencyApiSurfaces": [],
     "events": [],
     "configKeys": [
-      "SDKWORK_CLAWROUTER_OPEN_API_BASE_URL",
-      "CLAWROUTER_OPEN_API_BASE_URL",
-      "SDKWORK_CLAWROUTER_OPEN_API_KEY"
+      "SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL",
+      "CLOUDROUTER_OPEN_API_BASE_URL",
+      "SDKWORK_CLOUDROUTER_OPEN_API_KEY"
     ]
   },
   "verification": {

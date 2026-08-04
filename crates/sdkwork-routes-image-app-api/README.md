@@ -16,7 +16,7 @@ Image app-api route crate for `/app/v3/api/image/*`.
 Gateway assembly injects `Arc<ImageGenerationHost>` and optionally starts the background processor:
 
 ```rust
-// Production: ClawRouter + IMAGE database + optional DRIVE import + background processor
+// Production: CloudRouter + IMAGE database + optional DRIVE import + background processor
 let assembly = assemble_api_router_from_env().await?;
 // assembly.contribution is consumed intact by the selected gateway profile.
 // assembly.background_processor holds the task when IMAGE_BACKGROUND_PROCESSOR_ENABLED (default true).

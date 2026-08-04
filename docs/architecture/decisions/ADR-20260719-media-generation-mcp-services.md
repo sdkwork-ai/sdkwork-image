@@ -31,7 +31,7 @@ HTTP, whose stateful response channel is SSE (`text/event-stream`). A separate l
 is not introduced.
 
 The MCP crates must not depend on provider adapters, generated SDKs, repositories, SQLx, HTTP route
-crates, gateway assemblies, or raw provider clients. They must not expose ClawRouter, generated SDK
+crates, gateway assemblies, or raw provider clients. They must not expose CloudRouter, generated SDK
 method names, provider URLs, credentials, or adapter dispatch plans in MCP schemas.
 
 Composition roots mount the service and own authentication, authorization, tenant/user context,

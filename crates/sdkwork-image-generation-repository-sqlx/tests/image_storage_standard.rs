@@ -114,7 +114,7 @@ fn runtime_migration_declares_provider_drive_and_multi_output_sync_tables() {
             && !sql.contains("thumbnail_url")
             && !sql.contains("image_url")
             && !sql.contains("video_url")
-            && !sql.contains("claw_router_"),
+            && !sql.contains("cloud_router_"),
         "image runtime storage must not persist transport-specific URL or router columns",
     );
 }

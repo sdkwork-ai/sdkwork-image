@@ -10,7 +10,7 @@ path = "src/lib.rs"
 
 [dependencies]
 async-trait = "0.1"
-clawrouter-open-sdk.workspace = true
+cloudrouter-open-sdk.workspace = true
 sdkwork-image-generation-provider-spi.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

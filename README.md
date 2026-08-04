@@ -70,7 +70,7 @@ When DRIVE database configuration is present and `IMAGE_DRIVE_IMPORT_ENABLED` is
 | `DRIVE_*` | Drive database connection (same as `sdkwork-drive`) |
 | `IMAGE_DRIVE_IMPORT_ENABLED` | `true` (default) / `false` to skip live import |
 | `IMAGE_DRIVE_OBJECT_STORE_ROOT` | Local object store root (default `.data/image-drive-objects`) |
-| `SDKWORK_CLAWROUTER_OPEN_API_BASE_URL` | ClawRouter provider dispatch |
+| `SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL` | CloudRouter provider dispatch |
 | `IMAGE_*` | Image projection database |
 | `IMAGE_BACKGROUND_PROCESSOR_ENABLED` | `true` (default) / `false` to disable provider poll + notification delivery loop |
 | `IMAGE_BACKGROUND_POLL_INTERVAL_SECONDS` | Background loop interval (default `30`) |
