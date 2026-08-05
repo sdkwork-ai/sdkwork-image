@@ -2,13 +2,15 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "declaration": true,
     "esModuleInterop": true,
-    "ignoreDeprecations": "6.0",
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noFallthroughCasesInSwitch": true,
@@ -19,23 +21,10 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022",
-    "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
-    "paths": {
-      "@sdkwork/image-contracts": [
-        "apps/sdkwork-image-common/packages/sdkwork-image-contracts/src/index.ts"
-      ],
-      "@sdkwork/image-pc": [
-        "apps/sdkwork-image-pc/packages/sdkwork-image-pc/src/index.ts"
-      ],
-      "@sdkwork/image-pc-generation": [
-        "apps/sdkwork-image-pc/packages/sdkwork-image-pc-generation/src/index.ts"
-      ],
-      "@sdkwork/core-pc-react": [
-        "types/sdkwork-core-pc-react.d.ts"
-      ],
-      "@sdkwork/ui-pc-react": [
-        "types/sdkwork-ui-pc-react.d.ts"
-      ]
-    }
+    "types": [
+      "node",
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ]
   }
 }

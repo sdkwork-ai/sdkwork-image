@@ -50,7 +50,8 @@
     "@sdkwork/image-contracts": "workspace:*",
     "@sdkwork/utils": "workspace:*",
     "lucide-react": "catalog:",
-    "react-i18next": "catalog:"
+    "react-i18next": "catalog:",
+    "react": "catalog:"
   },
   "peerDependencies": {
     "@sdkwork/ui-pc-react": "workspace:*",
