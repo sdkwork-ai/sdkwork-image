@@ -13,7 +13,7 @@ async-trait = "0.1"
 parking_lot = "0.12"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-sqlx = { version = "0.8", default-features = false, features = ["json", "macros", "runtime-tokio", "postgres"] }
+sqlx = { version = "0.9", default-features = false, features = ["json", "macros", "runtime-tokio", "postgres"] }
 sdkwork-image-database-host.workspace = true
 sdkwork-image-generation-service.workspace = true
 sdkwork-image-generation-workflow-service.workspace = true

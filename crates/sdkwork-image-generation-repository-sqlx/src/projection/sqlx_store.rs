@@ -61,10 +61,16 @@ impl GenerationProjectionRepository for SqlxGenerationProjectionRepository {
         let style = input.style.clone().unwrap_or_else(|| "default".to_string());
 
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
                 let mut tx = pool.begin().await?;
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 INSERT INTO {table} (
     uuid, tenant_id, organization_id, user_id, prompt, negative_prompt,
@@ -80,7 +86,7 @@ INSERT INTO {table} (
     $25, CURRENT_TIMESTAMP
 )
 "#
-                ))
+                )))
                 .bind(&record.generation_id)
                 .bind(tenant_id)
                 .bind(organization_id)
@@ -161,7 +167,13 @@ INSERT INTO {table} (
     ) -> Result<Option<GenerationProjectionRecord>, RepositoryError> {
         let tenant_id = parse_scope_id(tenant_id, "tenant_id")?;
         let row = match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 read_job_row_pg(pool, ctx, tenant_id, generation_id).await?
             }
         };
@@ -181,7 +193,13 @@ INSERT INTO {table} (
         let limit = limit.clamp(1, 100);
         let offset = offset.max(0);
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 list_wire_json_pg(pool, ctx, tenant_id, limit, offset).await
             }
         }
@@ -209,10 +227,16 @@ INSERT INTO {table} (
             .first()
             .map(|row| row.drive_space_id.as_str());
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
                 let mut tx = pool.begin().await?;
-                let result = sqlx::query(&format!(
+                let result = sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 UPDATE {table}
 SET job_status = $1,
@@ -228,7 +252,7 @@ WHERE tenant_id = $8
   AND organization_id = $9
   AND uuid = $10
 "#
-                ))
+                )))
                 .bind(persistence.job_status_code)
                 .bind(&persistence.drive_sync_status)
                 .bind(&persistence.provider_task_id)
@@ -270,7 +294,7 @@ WHERE tenant_id = $8
                     .iter()
                     .any(|method| method == "mark_generation_succeeded")
                 {
-                    sqlx::query(&format!(
+                    sqlx::query(sqlx::AssertSqlSafe(format!(
                         r#"
 UPDATE {table}
 SET job_status = $1,
@@ -282,7 +306,7 @@ WHERE tenant_id = $2
   AND organization_id = $3
   AND uuid = $4
 "#
-                    ))
+                    )))
                     .bind(persistence.job_status_code)
                     .bind(tenant_id)
                     .bind(organization_id)
@@ -341,9 +365,15 @@ WHERE tenant_id = $2
         };
         let metadata_json = serde_json::to_value(&metadata)?;
         let affected = match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 UPDATE {table}
 SET metadata = $1,
@@ -355,7 +385,7 @@ WHERE tenant_id = $2
   AND deleted_at IS NULL
   AND job_status IN (1, 2)
 "#
-                ))
+                )))
                 .bind(metadata_json)
                 .bind(tenant_id)
                 .bind(organization_id)
@@ -369,11 +399,17 @@ WHERE tenant_id = $2
             return Ok(());
         }
         let exists = match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
-                sqlx::query_scalar::<_, i64>(&format!(
+                sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
                     r#"SELECT COUNT(1) FROM {table} WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NULL"#
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(generation_id)
@@ -477,9 +513,9 @@ async fn fetch_job_identity_pg(
     organization_id: i64,
     generation_id: &str,
 ) -> Result<(i64, i64), RepositoryError> {
-    let row: (i64, Option<i64>) = sqlx::query_as(&format!(
+    let row: (i64, Option<i64>) = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"SELECT id, user_id FROM {table} WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3"#
-    ))
+    )))
     .bind(tenant_id)
     .bind(organization_id)
     .bind(generation_id)
@@ -530,7 +566,7 @@ async fn insert_output_pg(
         .size_bytes
         .as_deref()
         .and_then(|value| value.parse::<i64>().ok());
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"
 INSERT INTO {table} (
     uuid, tenant_id, organization_id, user_id, generation_job_id, generation_uuid,
@@ -560,7 +596,7 @@ DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP,
     version = version + 1
 "#
-    ))
+    )))
     .bind(output_uuid)
     .bind(tenant_id)
     .bind(organization_id)
@@ -616,14 +652,14 @@ async fn read_job_row_pg(
             Option<String>,
             String,
         ),
-    >(&format!(
+    >(sqlx::AssertSqlSafe(format!(
         r#"
 SELECT organization_id, user_id, scene, provider_code, provider_state, metadata, input_snapshot,
        job_status, drive_sync_status, provider_task_id, provider_status, uuid
 FROM {table}
 WHERE tenant_id = $1 AND uuid = $2 AND deleted_at IS NULL
 "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(generation_id)
     .fetch_optional(pool)
@@ -667,14 +703,14 @@ async fn list_wire_json_pg(
     offset: i64,
 ) -> Result<Vec<serde_json::Value>, RepositoryError> {
     let table = ctx.table_name("image_generation_job");
-    let rows: Vec<(serde_json::Value,)> = sqlx::query_as(&format!(
+    let rows: Vec<(serde_json::Value,)> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"
 SELECT metadata FROM {table}
 WHERE tenant_id = $1 AND deleted_at IS NULL
 ORDER BY id DESC
 LIMIT $2 OFFSET $3
 "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(limit)
     .bind(offset)
@@ -695,9 +731,9 @@ async fn fetch_job_lifecycle_snapshots_pg(
     organization_id: i64,
     generation_id: &str,
 ) -> Result<(ImageGenerationInputSnapshot, ImageProviderRequestSnapshot), RepositoryError> {
-    let row: (serde_json::Value, serde_json::Value) = sqlx::query_as(&format!(
+    let row: (serde_json::Value, serde_json::Value) = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"SELECT input_snapshot, provider_state FROM {table} WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3"#
-    ))
+    )))
     .bind(tenant_id)
     .bind(organization_id)
     .bind(generation_id)

@@ -151,9 +151,15 @@ async fn mark_provider_submitted(
     let table = ctx.table_name("image_generation_job");
     let poll_due = provider_poll_due(persistence.runtime_status);
     match pool {
-        DatabasePool::Postgres(pg_pool, _) => {
+        DatabasePool::Sqlite(_, _) => {
+            return Err(RepositoryError::Database(
+                "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                    .to_string(),
+            ));
+        }
+                DatabasePool::Postgres(pg_pool, _) => {
             if poll_due {
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 UPDATE {table}
 SET provider_task_id = $5,
@@ -166,7 +172,7 @@ SET provider_task_id = $5,
     version = version + 1
 WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND provider_code = $4
 "#
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(generation_uuid)
@@ -178,7 +184,7 @@ WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND provider_code = 
                 .execute(pg_pool)
                 .await?;
             } else {
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 UPDATE {table}
 SET provider_task_id = $5,
@@ -190,7 +196,7 @@ SET provider_task_id = $5,
     version = version + 1
 WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND provider_code = $4
 "#
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(generation_uuid)
@@ -231,9 +237,15 @@ async fn upsert_provider_task(
     let poll_due = provider_poll_due(persistence.runtime_status);
     let table = ctx.table_name("image_provider_task");
     match pool {
-        DatabasePool::Postgres(pg_pool, _) => {
+        DatabasePool::Sqlite(_, _) => {
+            return Err(RepositoryError::Database(
+                "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                    .to_string(),
+            ));
+        }
+                DatabasePool::Postgres(pg_pool, _) => {
             if poll_due {
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 INSERT INTO {table} (
     uuid, tenant_id, organization_id, generation_job_id, provider_code,
@@ -256,7 +268,7 @@ DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP,
     version = image_provider_task.version + 1
 "#
-                ))
+                )))
                 .bind(&task_uuid)
                 .bind(tenant_id)
                 .bind(organization_id)
@@ -274,7 +286,7 @@ DO UPDATE SET
                 .execute(pg_pool)
                 .await?;
             } else {
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 INSERT INTO {table} (
     uuid, tenant_id, organization_id, generation_job_id, provider_code,
@@ -297,7 +309,7 @@ DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP,
     version = image_provider_task.version + 1
 "#
-                ))
+                )))
                 .bind(&task_uuid)
                 .bind(tenant_id)
                 .bind(organization_id)
@@ -330,8 +342,14 @@ async fn mark_generation_failed(
 ) -> Result<(), RepositoryError> {
     let table = ctx.table_name("image_generation_job");
     match pool {
-        DatabasePool::Postgres(pg_pool, _) => {
-            sqlx::query(&format!(
+        DatabasePool::Sqlite(_, _) => {
+            return Err(RepositoryError::Database(
+                "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                    .to_string(),
+            ));
+        }
+                DatabasePool::Postgres(pg_pool, _) => {
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 r#"
 UPDATE {table}
 SET job_status = $4,
@@ -341,7 +359,7 @@ SET job_status = $4,
     version = version + 1
 WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3
 "#
-            ))
+            )))
             .bind(tenant_id)
             .bind(organization_id)
             .bind(generation_uuid)
@@ -401,8 +419,14 @@ async fn enqueue_single_outbox_event(
         "callbackUrl": input_snapshot.callback_url,
     });
     match pool {
-        DatabasePool::Postgres(pg_pool, _) => {
-            sqlx::query(&format!(
+        DatabasePool::Sqlite(_, _) => {
+            return Err(RepositoryError::Database(
+                "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                    .to_string(),
+            ));
+        }
+                DatabasePool::Postgres(pg_pool, _) => {
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 r#"
 INSERT INTO {table} (
     uuid, tenant_id, organization_id, aggregate_type, aggregate_id,
@@ -412,7 +436,7 @@ INSERT INTO {table} (
     $6, $7, 'pending', CURRENT_TIMESTAMP, $8
 )
 "#
-            ))
+            )))
             .bind(&outbox_uuid)
             .bind(tenant_id)
             .bind(organization_id)

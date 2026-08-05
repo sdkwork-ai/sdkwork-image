@@ -76,10 +76,16 @@ impl ImageGenerationBackgroundRepository for SqlxImageGenerationBackgroundReposi
     ) -> Result<Vec<DueProviderTaskRow>, RepositoryError> {
         let limit = limit.clamp(1, 100);
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let task_table = ctx.table_name("image_provider_task");
                 let job_table = ctx.table_name("image_generation_job");
-                let rows = sqlx::query_as::<_, (String, i64, i64, String, i64, String, String)>(&format!(
+                let rows = sqlx::query_as::<_, (String, i64, i64, String, i64, String, String)>(sqlx::AssertSqlSafe(format!(
                     r#"
 SELECT t.uuid, t.tenant_id, t.organization_id, j.uuid, COALESCE(j.user_id, 0), t.provider_code, t.provider_task_id
 FROM {task_table} t
@@ -92,7 +98,7 @@ WHERE t.dispatch_status IN ('submitted', 'rendering', 'pending')
 ORDER BY t.next_poll_at NULLS FIRST, t.id
 LIMIT $1
 "#
-                ))
+                )))
                 .bind(limit)
                 .fetch_all(pool)
                 .await?;
@@ -129,9 +135,15 @@ LIMIT $1
     ) -> Result<(), RepositoryError> {
         let poll_interval_seconds = poll_interval_seconds.clamp(5, 3600);
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_provider_task");
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 UPDATE {table}
 SET poll_attempts = poll_attempts + 1,
@@ -141,7 +153,7 @@ SET poll_attempts = poll_attempts + 1,
     version = version + 1
 WHERE uuid = $1
 "#
-                ))
+                )))
                 .bind(task_uuid)
                 .bind(poll_interval_seconds)
                 .execute(pool)
@@ -157,7 +169,13 @@ WHERE uuid = $1
     ) -> Result<Vec<PendingNotificationRow>, RepositoryError> {
         let limit = limit.clamp(1, 100);
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_notification_outbox");
                 let rows = sqlx::query_as::<
                     _,
@@ -172,7 +190,7 @@ WHERE uuid = $1
                         serde_json::Value,
                         i32,
                     ),
-                >(&format!(
+                >(sqlx::AssertSqlSafe(format!(
                     r#"
 SELECT uuid, tenant_id, organization_id, aggregate_type, aggregate_id, event_type,
        payload_snapshot, metadata, delivery_attempts
@@ -183,7 +201,7 @@ WHERE delivery_status = 'pending'
 ORDER BY next_delivery_at NULLS FIRST, id
 LIMIT $1
 "#
-                ))
+                )))
                 .bind(limit)
                 .fetch_all(pool)
                 .await?;
@@ -219,9 +237,15 @@ LIMIT $1
 
     async fn mark_notification_delivered(&self, outbox_uuid: &str) -> Result<(), RepositoryError> {
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_notification_outbox");
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 UPDATE {table}
 SET delivery_status = 'delivered',
@@ -230,7 +254,7 @@ SET delivery_status = 'delivered',
     version = version + 1
 WHERE uuid = $1
 "#
-                ))
+                )))
                 .bind(outbox_uuid)
                 .execute(pool)
                 .await?;
@@ -247,9 +271,15 @@ WHERE uuid = $1
     ) -> Result<(), RepositoryError> {
         let retry_after_seconds = retry_after_seconds.clamp(5, 86_400);
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_notification_outbox");
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 UPDATE {table}
 SET delivery_status = 'pending',
@@ -260,7 +290,7 @@ SET delivery_status = 'pending',
     version = version + 1
 WHERE uuid = $1
 "#
-                ))
+                )))
                 .bind(outbox_uuid)
                 .bind(error_message)
                 .bind(retry_after_seconds)

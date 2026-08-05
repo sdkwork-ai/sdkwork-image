@@ -37,7 +37,13 @@ impl ImageCatalogRepository for SqlxImageCatalogRepository {
         let offset = offset.max(0);
         let search = q.map(str::trim).filter(|value| !value.is_empty());
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_preset");
                 let mut sql = format!(
                     r#"
@@ -56,7 +62,7 @@ WHERE tenant_id = $1
                 let rows = if let Some(search) = search {
                     let pattern = format!("%{search}%");
                     sqlx::query_as::<_, (String, String, String, Option<String>, String, String)>(
-                        &sql,
+                        sqlx::AssertSqlSafe(sql.as_str()),
                     )
                     .bind(tenant_id)
                     .bind(organization_id)
@@ -67,7 +73,7 @@ WHERE tenant_id = $1
                     .await?
                 } else {
                     sqlx::query_as::<_, (String, String, String, Option<String>, String, String)>(
-                        &sql,
+                        sqlx::AssertSqlSafe(sql.as_str()),
                     )
                     .bind(tenant_id)
                     .bind(organization_id)
@@ -110,16 +116,22 @@ WHERE tenant_id = $1
     ) -> Result<Option<ImagePresetRecord>, RepositoryError> {
         let (tenant_id, organization_id) = scope_ids(scope)?;
         let row = match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_preset");
                 sqlx::query_as::<_, (String, String, String, Option<String>, String, String)>(
-                    &format!(
+                    sqlx::AssertSqlSafe(format!(
                         r#"
 SELECT uuid, preset_key, title, description, default_resolution, default_style
 FROM {table}
 WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NULL
 "#
-                    ),
+                    )),
                 )
                 .bind(tenant_id)
                 .bind(organization_id)
@@ -155,7 +167,13 @@ WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NU
         let offset = offset.max(0);
         let search = q.map(str::trim).filter(|value| !value.is_empty());
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_asset");
                 let rows = if let Some(search) = search {
                     let pattern = format!("%{search}%");
@@ -169,7 +187,7 @@ WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NU
                             Option<String>,
                             String,
                         ),
-                    >(&format!(
+                    >(sqlx::AssertSqlSafe(format!(
                         r#"
 SELECT uuid, title, prompt, resolution, mime_type, provenance
 FROM {table}
@@ -178,7 +196,7 @@ WHERE tenant_id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status 
 ORDER BY updated_at DESC, id DESC
 LIMIT $3 OFFSET $4
 "#
-                    ))
+                    )))
                     .bind(tenant_id)
                     .bind(organization_id)
                     .bind(limit)
@@ -197,7 +215,7 @@ LIMIT $3 OFFSET $4
                             Option<String>,
                             String,
                         ),
-                    >(&format!(
+                    >(sqlx::AssertSqlSafe(format!(
                         r#"
 SELECT uuid, title, prompt, resolution, mime_type, provenance
 FROM {table}
@@ -205,7 +223,7 @@ WHERE tenant_id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status 
 ORDER BY updated_at DESC, id DESC
 LIMIT $3 OFFSET $4
 "#
-                    ))
+                    )))
                     .bind(tenant_id)
                     .bind(organization_id)
                     .bind(limit)
@@ -239,7 +257,13 @@ LIMIT $3 OFFSET $4
     ) -> Result<Option<ImageAssetRecord>, RepositoryError> {
         let (tenant_id, organization_id) = scope_ids(scope)?;
         let row = match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_asset");
                 sqlx::query_as::<
                     _,
@@ -251,13 +275,13 @@ LIMIT $3 OFFSET $4
                         Option<String>,
                         String,
                     ),
-                >(&format!(
+                >(sqlx::AssertSqlSafe(format!(
                     r#"
 SELECT uuid, title, prompt, resolution, mime_type, provenance
 FROM {table}
 WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NULL
 "#
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(asset_id.trim())
@@ -289,12 +313,18 @@ WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NU
         let offset = offset.max(0);
         let search = q.map(str::trim).filter(|value| !value.is_empty());
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_gallery");
                 let item_table = ctx.table_name("image_gallery_item");
                 let rows = if let Some(search) = search {
                     let pattern = format!("%{search}%");
-                    sqlx::query_as::<_, (String, String, String, Option<String>, i64)>(&format!(
+                    sqlx::query_as::<_, (String, String, String, Option<String>, i64)>(sqlx::AssertSqlSafe(format!(
                         r#"
 SELECT g.uuid, g.gallery_key, g.title, g.description,
        COALESCE((SELECT COUNT(1) FROM {item_table} gi WHERE gi.gallery_id = g.id AND gi.deleted_at IS NULL), 0)
@@ -304,7 +334,7 @@ WHERE g.tenant_id = $1 AND g.organization_id = $2 AND g.deleted_at IS NULL AND g
 ORDER BY g.updated_at DESC, g.id DESC
 LIMIT $3 OFFSET $4
 "#
-                    ))
+                    )))
                     .bind(tenant_id)
                     .bind(organization_id)
                     .bind(limit)
@@ -313,7 +343,7 @@ LIMIT $3 OFFSET $4
                     .fetch_all(pool)
                     .await?
                 } else {
-                    sqlx::query_as::<_, (String, String, String, Option<String>, i64)>(&format!(
+                    sqlx::query_as::<_, (String, String, String, Option<String>, i64)>(sqlx::AssertSqlSafe(format!(
                         r#"
 SELECT g.uuid, g.gallery_key, g.title, g.description,
        COALESCE((SELECT COUNT(1) FROM {item_table} gi WHERE gi.gallery_id = g.id AND gi.deleted_at IS NULL), 0)
@@ -322,7 +352,7 @@ WHERE g.tenant_id = $1 AND g.organization_id = $2 AND g.deleted_at IS NULL AND g
 ORDER BY g.updated_at DESC, g.id DESC
 LIMIT $3 OFFSET $4
 "#
-                    ))
+                    )))
                     .bind(tenant_id)
                     .bind(organization_id)
                     .bind(limit)
@@ -378,33 +408,39 @@ LIMIT $3 OFFSET $4
         let sort_order = command.sort_order.unwrap_or(0);
         let caption = command.caption.clone();
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let gallery_table = ctx.table_name("image_gallery");
                 let asset_table = ctx.table_name("image_asset");
                 let item_table = ctx.table_name("image_gallery_item");
-                let gallery_pk: i64 = sqlx::query_scalar(&format!(
+                let gallery_pk: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                     "SELECT id FROM {gallery_table} WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3"
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(gallery_id.trim())
                 .fetch_one(pool)
                 .await?;
-                let asset_pk: i64 = sqlx::query_scalar(&format!(
+                let asset_pk: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                     "SELECT id FROM {asset_table} WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3"
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(asset.asset_id.as_str())
                 .fetch_one(pool)
                 .await?;
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 INSERT INTO {item_table} (
     uuid, tenant_id, organization_id, gallery_id, asset_id, sort_order, caption
 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
 "#
-                ))
+                )))
                 .bind(&item_id)
                 .bind(tenant_id)
                 .bind(organization_id)
@@ -453,25 +489,31 @@ INSERT INTO {item_table} (
         let user_id = parse_scope_id(&scope.user_id, "user_id").unwrap_or(0);
         let task_id = uuid();
         match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let asset_table = ctx.table_name("image_asset");
                 let task_table = ctx.table_name("image_edit_task");
-                let source_asset_pk: i64 = sqlx::query_scalar(&format!(
+                let source_asset_pk: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                     "SELECT id FROM {asset_table} WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3"
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(asset.asset_id.as_str())
                 .fetch_one(pool)
                 .await?;
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
 INSERT INTO {task_table} (
     uuid, tenant_id, organization_id, user_id, source_asset_id, edit_type,
     prompt, negative_prompt, job_status
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1)
 "#
-                ))
+                )))
                 .bind(&task_id)
                 .bind(tenant_id)
                 .bind(organization_id)
@@ -500,17 +542,23 @@ INSERT INTO {task_table} (
     ) -> Result<Option<ImageEditTaskRecord>, RepositoryError> {
         let (tenant_id, organization_id) = scope_ids(scope)?;
         let row = match &self.pool {
-            DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Sqlite(_, _) => {
+                return Err(RepositoryError::Database(
+                    "image generation repository requires PostgreSQL; SQLite engine is not supported"
+                        .to_string(),
+                ));
+            }
+                        DatabasePool::Postgres(pool, ctx) => {
                 let task_table = ctx.table_name("image_edit_task");
                 let asset_table = ctx.table_name("image_asset");
-                sqlx::query_as::<_, (String, String, String, String, i32)>(&format!(
+                sqlx::query_as::<_, (String, String, String, String, i32)>(sqlx::AssertSqlSafe(format!(
                     r#"
 SELECT t.uuid, a.uuid, t.edit_type, t.prompt, t.job_status
 FROM {task_table} t
 JOIN {asset_table} a ON a.id = t.source_asset_id
 WHERE t.tenant_id = $1 AND t.organization_id = $2 AND t.uuid = $3 AND t.deleted_at IS NULL
 "#
-                ))
+                )))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(task_id.trim())
