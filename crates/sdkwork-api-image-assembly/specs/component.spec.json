@@ -43,9 +43,24 @@
   ],
   "contracts": {
     "publicExports": [
-      "."
+      "sdkwork_api_image_assembly::assemble_api_router_from_env",
+      "sdkwork_api_image_assembly::assemble_api_router_with_pool"
     ],
-    "runtimeEntrypoints": [],
+    "providedPorts": [
+      {
+        "name": "imageApiAssembly",
+        "export": "sdkwork_api_image_assembly::assemble_api_router_from_env"
+      },
+      {
+        "name": "imageApiAssemblyWithPool",
+        "export": "sdkwork_api_image_assembly::assemble_api_router_with_pool"
+      }
+    ],
+    "requiredPorts": [],
+    "runtimeEntrypoints": [
+      "sdkwork_api_image_assembly::assemble_api_router_from_env",
+      "sdkwork_api_image_assembly::assemble_api_router_with_pool"
+    ],
     "routeManifest": "assembly-manifest.json",
     "sdkClients": [],
     "sdkDependencies": [],

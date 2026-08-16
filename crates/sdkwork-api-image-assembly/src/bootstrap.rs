@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 pub struct ApiAssembly {
     pub contribution: ApiAssemblyContribution,
+    pub database_pool: DatabasePool,
     pub background_processor: Option<tokio::task::JoinHandle<()>>,
 }
 
@@ -34,11 +35,12 @@ pub fn assemble_api_router(
         router,
         sdkwork_routes_image_app_api::gateway_route_manifest(),
         Vec::new(),
-        Arc::new(DatabasePoolReadinessCheck::new(database_pool)),
+        Arc::new(DatabasePoolReadinessCheck::new(database_pool.clone())),
     )?;
     let background_processor = generation_host.spawn_background_processor_if_enabled();
     Ok(ApiAssembly {
         contribution,
+        database_pool,
         background_processor,
     })
 }

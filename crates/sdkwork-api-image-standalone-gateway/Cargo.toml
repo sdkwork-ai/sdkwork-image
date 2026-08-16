@@ -1,0 +1,14 @@
+[package]
+name = "sdkwork-api-image-standalone-gateway"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "sdkwork-api-image-standalone-gateway"
+path = "src/main.rs"
+
+[dependencies]
+sdkwork-api-image-assembly.workspace = true
+sdkwork-iam-web-adapter.workspace = true
+sdkwork_web_bootstrap.workspace = true
+tokio.workspace = true

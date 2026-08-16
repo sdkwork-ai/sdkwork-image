@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/sdkwork-api-image-assembly",
+    "crates/sdkwork-api-image-standalone-gateway",
     "crates/sdkwork-image-database-host",
     "crates/sdkwork-image-generation-service",
     "crates/sdkwork-image-generation-mcp-service",
@@ -20,6 +21,7 @@ version = "0.1.0"
 
 [workspace.dependencies]
 sdkwork_web_bootstrap = { path = "../sdkwork-web-framework/crates/sdkwork-web-bootstrap", package = "sdkwork-web-bootstrap" }
+sdkwork-api-image-assembly = { path = "crates/sdkwork-api-image-assembly" }
 
 sdkwork-drive-storage-contract = { path = "../sdkwork-drive/crates/sdkwork-drive-storage-contract" }
 sdkwork-drive-storage-local = { path = "../sdkwork-drive/crates/sdkwork-drive-storage-local" }
@@ -39,7 +41,7 @@ sdkwork-image-database-host = { path = "crates/sdkwork-image-database-host" }
 sdkwork-database-config = { path = "../sdkwork-database/crates/sdkwork-database-config", package = "sdkwork-database-config" }
 sdkwork-database-lifecycle = { path = "../sdkwork-database/crates/sdkwork-database-lifecycle", package = "sdkwork-database-lifecycle" }
 sdkwork-database-spi = { path = "../sdkwork-database/crates/sdkwork-database-spi", package = "sdkwork-database-spi" }
-sdkwork-database-sqlx = { path = "../sdkwork-database/crates/sdkwork-database-sqlx", package = "sdkwork-database-sqlx" }
+sdkwork-database-sqlx = { path = "../sdkwork-database/crates/sdkwork-database-sqlx", package = "sdkwork-database-sqlx", features = ["postgres", "sqlite"] }
 # SDKWork workspace members - declared once at workspace root
 sdkwork-image-generation-service = { path = "crates/sdkwork-image-generation-service" }
 sdkwork-image-generation-mcp-service = { path = "crates/sdkwork-image-generation-mcp-service" }
