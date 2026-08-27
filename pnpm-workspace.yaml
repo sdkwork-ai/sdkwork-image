@@ -45,6 +45,8 @@ packages:
   - "../sdkwork-music/apps/sdkwork-music-pc/packages/sdkwork-music-pc-generation"
   - "../sdkwork-video/apps/sdkwork-video-pc/packages/sdkwork-video-pc-generation"
 
+  - "../sdkwork-assets/sdks/sdkwork-assets-app-sdk/sdkwork-assets-app-sdk-typescript"
+  - "../sdkwork-ui/sdkwork-ui-mobile-react"
 catalog:
   "@monaco-editor/react": ^4.7.0
   "@playwright/test": ^1.52.0
@@ -154,3 +156,5 @@ catalog:
   vite-plugin-dts: ^4.5.4
   vitest: ^4.1.8
   zustand: ^5.0.12
+
+
