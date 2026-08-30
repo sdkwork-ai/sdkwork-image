@@ -1,25 +1,112 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "schemaVersion": 1,
-  "applicationCode": "sdkwork-image-pc",
-  "productName": "sdkwork-image",
-  "surface": "pc",
-  "architecture": "pc-react",
-  "description": "SDKWork image generation, editing, and gallery PC application",
-  "version": "0.1.0",
-  "login": {
-    "provider": "appbase",
-    "sdkFamily": "sdkwork-iam-app-sdk"
+  "schemaVersion": 3,
+  "kind": "sdkwork.app",
+  "app": {
+    "key": "app-dfypil",
+    "name": "App Dfypil",
+    "displayName": "App Dfypil",
+    "officialWebsiteUrl": "https://sdkwork.com/apps/app-dfypil",
+    "appType": "APP_HTML"
   },
-  "sdkDependencies": {
-    "sdkwork-image-app-sdk": {
-      "version": "workspace:*",
-      "surface": "app-api"
+  "backend": {},
+  "runtime": {
+    "supportedDeploymentProfiles": [
+      "cloud"
+    ],
+    "defaultDeploymentProfile": "cloud",
+    "family": "server",
+    "framework": "rust-axum"
+  },
+  "media": {
+    "icons": {
+      "primary": {
+        "id": "app-dfypil-primary-icon",
+        "type": "ICON",
+        "purpose": "PRIMARY",
+        "url": "https://cdn.sdkwork.com/apps/app-dfypil/assets/icon-1024.png",
+        "platform": "APP",
+        "locale": "en-US",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "fileSizeBytes": 524288,
+        "alphaChannel": false,
+        "sortOrder": 0,
+        "enabled": true,
+        "metadata": {
+          "generatedPlaceholder": true
+        }
+      },
+      "platform": [],
+      "metadata": {
+        "generatedPlaceholder": true
+      }
     },
-    "sdkwork-iam-app-sdk": {
-      "version": "workspace:*",
-      "surface": "app-api"
+    "screenshots": [
+      {
+        "id": "app-dfypil-web-screenshot",
+        "type": "SCREENSHOT",
+        "purpose": "CATALOG_SCREENSHOT",
+        "url": "https://cdn.sdkwork.com/apps/app-dfypil/media/web-screenshot.png",
+        "platform": "WEB",
+        "locale": "en-US",
+        "deviceClass": "BROWSER",
+        "displayType": "WEB_DESKTOP",
+        "width": 1920,
+        "height": 1080,
+        "format": "PNG",
+        "fileSizeBytes": 1048576,
+        "alphaChannel": false,
+        "caption": "App Dfypil product screenshot.",
+        "sortOrder": 0,
+        "enabled": true,
+        "metadata": {
+          "generatedPlaceholder": true,
+          "altText": "App Dfypil app screenshot."
+        }
+      }
+    ],
+    "previews": [
+      {
+        "id": "app-dfypil-catalog-preview",
+        "type": "PREVIEW_IMAGE",
+        "purpose": "CATALOG_PREVIEW",
+        "url": "https://cdn.sdkwork.com/apps/app-dfypil/media/preview-cover.png",
+        "platform": "WEB",
+        "locale": "en-US",
+        "width": 1600,
+        "height": 900,
+        "format": "PNG",
+        "fileSizeBytes": 786432,
+        "alphaChannel": false,
+        "caption": "App Dfypil preview.",
+        "sortOrder": 0,
+        "enabled": true,
+        "metadata": {
+          "generatedPlaceholder": true,
+          "altText": "App Dfypil preview cover."
+        }
+      }
+    ],
+    "metadata": {
+      "assetVersion": "0.1.0",
+      "defaultLocale": "en-US"
     }
+  },
+  "publish": {
+    "status": "ACTIVE",
+    "platforms": [
+      "WEB"
+    ],
+    "installPlatforms": [
+      "WEB"
+    ],
+    "defaultPackageId": "linux-x64-cloud-server-tar-gz",
+    "installSkill": {
+      "name": "sdkwork-skills-app"
+    },
+    "stores": [],
+    "storeUrl": "https://sdkwork.com/apps/app-dfypil"
   },
   "environments": {
     "development": {
@@ -35,15 +122,69 @@
       "browserRuntimeConfig": "config/browser/runtime-env.production.example.json"
     }
   },
-  "build": {
-    "type": "vite",
-    "entry": "src/main.tsx",
-    "outDir": "dist"
+  "artifacts": {
+    "installConfig": {
+      "defaultPackageId": "linux-x64-cloud-server-tar-gz",
+      "installCommand": "sdkwork install app-dfypil",
+      "launchCommand": "sdkwork open app-dfypil",
+      "uninstallCommand": "sdkwork uninstall app-dfypil",
+      "packages": [
+        {
+          "id": "linux-x64-cloud-server-tar-gz",
+          "name": "App Dfypil cloud server archive",
+          "sourceType": "BINARY_URL",
+          "packageFormat": "TAR_GZ",
+          "platform": "API",
+          "url": "https://cdn.sdkwork.com/apps/app-dfypil/STABLE/0.1.0/linux-x64-cloud-server-tar-gz-0.1.0.tar.gz",
+          "architecture": "x64",
+          "checksumAlgorithm": "SHA-256",
+          "checksum": "2dcbd7776fdc92f5f23a458697f23d293804aee331ac5c1523163f390ef29916",
+          "deploymentProfile": "cloud",
+          "runtimeTarget": "server",
+          "profileBinding": "fixed",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": false
+          }
+        }
+      ]
+    }
   },
-  "runtime": {
-    "supportedDeploymentProfiles": [
-      "cloud"
-    ],
-    "defaultDeploymentProfile": "cloud"
+  "release": {
+    "currentVersion": "0.1.0",
+    "defaultChannel": "STABLE",
+    "latest": {
+      "STABLE": "0.1.0"
+    },
+    "notes": [
+      {
+        "version": "0.1.0",
+        "releaseChannel": "STABLE",
+        "title": "App Dfypil 0.1.0",
+        "summary": "App Dfypil initialized standard release.",
+        "content": "Initial SDKWork App Standard v3 manifest for App Dfypil.",
+        "highlights": [
+          "SDKWork App Standard v3 configuration initialized",
+          "platform_app projection metadata standardized",
+          "Download package matrix normalized"
+        ],
+        "packageIds": [
+          "linux-x64-cloud-server-tar-gz"
+        ],
+        "publishedAt": "2026-05-07T00:00:00Z",
+        "current": true,
+        "forceUpdate": false,
+        "minSupportedVersion": "0.1.0",
+        "metadata": {}
+      }
+    ]
+  },
+  "security": {
+    "checksumRequired": false,
+    "signatureRequired": false,
+    "sbomRequired": false
+  },
+  "metadata": {
+    "standardOwner": "sdkwork-platform"
   }
 }
