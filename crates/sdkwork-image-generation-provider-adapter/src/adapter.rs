@@ -308,6 +308,15 @@ fn map_sdk_error(error: cloudrouter_open_sdk::SdkworkError) -> ImageGenerationPr
         cloudrouter_open_sdk::SdkworkError::Serialization(error) => {
             ImageGenerationProviderError::InvalidProviderResponse(error.to_string())
         }
+        cloudrouter_open_sdk::SdkworkError::ResponseBodyTooLarge { .. } => {
+            ImageGenerationProviderError::InvalidProviderResponse(error.to_string())
+        }
+        cloudrouter_open_sdk::SdkworkError::ApiStatus { code, trace_id } => {
+            ImageGenerationProviderError::Rejected(format!("api status {code} (traceId={trace_id})"))
+        }
+        cloudrouter_open_sdk::SdkworkError::MissingAccessToken => {
+            ImageGenerationProviderError::Configuration(error.to_string())
+        }
         error @ (cloudrouter_open_sdk::SdkworkError::InvalidHeaderName(_)
         | cloudrouter_open_sdk::SdkworkError::InvalidHeaderValue(_)
         | cloudrouter_open_sdk::SdkworkError::InvalidHttpMethod(_)) => {
