@@ -1,6 +1,6 @@
 {
   "name": "@sdkwork/image-app-sdk",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "SDKWork sdkwork-image-app-sdk composed consumer facade.",
   "type": "module",
   "private": false,
