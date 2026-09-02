@@ -10,10 +10,12 @@ path = "src/lib.rs"
 
 [dependencies]
 async-trait = "0.1"
+axum.workspace = true
 cloudrouter-open-sdk.workspace = true
 sdkwork-image-generation-provider-spi.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
+tower.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

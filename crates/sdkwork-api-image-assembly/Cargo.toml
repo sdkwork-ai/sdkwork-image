@@ -15,4 +15,5 @@ sdkwork_web_bootstrap = { workspace = true }
 sdkwork-web-core.workspace = true
 sdkwork-database-sqlx.workspace = true
 sdkwork-image-generation-host.workspace = true
+sdkwork-image-generation-provider-spi.workspace = true
 sdkwork-routes-image-app-api.workspace = true

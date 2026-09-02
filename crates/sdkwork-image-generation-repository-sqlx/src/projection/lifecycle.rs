@@ -157,7 +157,7 @@ async fn mark_provider_submitted(
                     .to_string(),
             ));
         }
-                DatabasePool::Postgres(pg_pool, _) => {
+        DatabasePool::Postgres(pg_pool, _) => {
             if poll_due {
                 sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
@@ -243,7 +243,7 @@ async fn upsert_provider_task(
                     .to_string(),
             ));
         }
-                DatabasePool::Postgres(pg_pool, _) => {
+        DatabasePool::Postgres(pg_pool, _) => {
             if poll_due {
                 sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
@@ -348,7 +348,7 @@ async fn mark_generation_failed(
                     .to_string(),
             ));
         }
-                DatabasePool::Postgres(pg_pool, _) => {
+        DatabasePool::Postgres(pg_pool, _) => {
             sqlx::query(sqlx::AssertSqlSafe(format!(
                 r#"
 UPDATE {table}
@@ -425,7 +425,7 @@ async fn enqueue_single_outbox_event(
                     .to_string(),
             ));
         }
-                DatabasePool::Postgres(pg_pool, _) => {
+        DatabasePool::Postgres(pg_pool, _) => {
             sqlx::query(sqlx::AssertSqlSafe(format!(
                 r#"
 INSERT INTO {table} (

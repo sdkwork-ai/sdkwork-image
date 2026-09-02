@@ -108,7 +108,23 @@ impl ImageGenerationHost {
     }
 
     pub async fn from_pool(pool: DatabasePool) -> Result<Arc<Self>, String> {
-        let provider_service = provider_service_from_env()?;
+        Self::from_pool_with_provider(pool, None).await
+    }
+
+    /// Same as [`Self::from_pool`] but lets the composition root inject the
+    /// image generation provider (APPLICATION_GATEWAY_SPEC §2.3): a host that
+    /// embeds CloudRouter in-process wires the CloudRouter dispatch adapter
+    /// here instead of leaving `provider_service_from_env` to build an HTTP
+    /// client from `SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL`. `None` falls back
+    /// to the environment-driven HTTP provider (standalone deployments).
+    pub async fn from_pool_with_provider(
+        pool: DatabasePool,
+        provider: Option<Arc<dyn sdkwork_image_generation_provider_spi::ImageGenerationProvider>>,
+    ) -> Result<Arc<Self>, String> {
+        let provider_service = match provider {
+            Some(provider) => provider_service_from_provider(provider)?,
+            None => provider_service_from_env()?,
+        };
         let database = bootstrap_image_database(pool).await?;
         let pool = database.pool().clone();
         let store = SqlxGenerationProjectionRepository::new(pool.clone());
@@ -154,6 +170,19 @@ impl ImageGenerationHost {
             background,
         ))
     }
+}
+
+fn provider_service_from_provider(
+    provider: Arc<dyn sdkwork_image_generation_provider_spi::ImageGenerationProvider>,
+) -> Result<Arc<ProviderGenerationService>, String> {
+    let provider_id = provider.descriptor().id.clone();
+    let registry = ImageGenerationProviderRegistry::builder()
+        .register(provider)
+        .map_err(|error| format!("image provider registration failed: {error}"))?
+        .default_provider(provider_id)
+        .build()
+        .map_err(|error| format!("image provider registry failed: {error}"))?;
+    Ok(Arc::new(ProviderGenerationService::new(registry)))
 }
 
 fn provider_service_from_env() -> Result<Arc<ProviderGenerationService>, String> {

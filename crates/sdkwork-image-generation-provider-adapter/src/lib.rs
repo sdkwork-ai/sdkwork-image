@@ -4,11 +4,15 @@
 //! infrastructure dependency and is never exposed through the provider SPI.
 
 mod adapter;
+mod embedded;
 mod normalization;
 mod requests;
 mod routing;
 
 pub use adapter::ImageGenerationProviderAdapter;
+pub use embedded::{
+    CloudRouterEmbeddedImageGenerationAdapter, IMAGE_GENERATION_PROVIDER_CLOUDROUTER_EMBEDDED_ID,
+};
 pub use normalization::{
     normalize_vidu_image_generation_task_result, normalize_vidu_task_creations_result,
 };

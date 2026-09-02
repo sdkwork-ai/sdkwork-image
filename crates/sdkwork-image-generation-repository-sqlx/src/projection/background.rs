@@ -82,7 +82,7 @@ impl ImageGenerationBackgroundRepository for SqlxImageGenerationBackgroundReposi
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let task_table = ctx.table_name("image_provider_task");
                 let job_table = ctx.table_name("image_generation_job");
                 let rows = sqlx::query_as::<_, (String, i64, i64, String, i64, String, String)>(sqlx::AssertSqlSafe(format!(
@@ -141,7 +141,7 @@ LIMIT $1
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_provider_task");
                 sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
@@ -175,7 +175,7 @@ WHERE uuid = $1
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_notification_outbox");
                 let rows = sqlx::query_as::<
                     _,
@@ -243,7 +243,7 @@ LIMIT $1
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_notification_outbox");
                 sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
@@ -277,7 +277,7 @@ WHERE uuid = $1
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_notification_outbox");
                 sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"

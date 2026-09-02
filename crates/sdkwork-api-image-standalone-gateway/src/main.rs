@@ -4,7 +4,7 @@ use sdkwork_iam_web_adapter::{
     build_web_framework_builder, iam_web_request_context_resolver_from_database_pool_for_audiences,
     iam_web_request_context_resolver_from_env, IamAuditEmitter, IamSecurityEventEmitter,
 };
-use sdkwork_web_bootstrap::{infra_public_path_prefixes, ComposedApiAssembly};
+use sdkwork_web_bootstrap::{infra_public_path_prefixes, ApiModuleRegistry};
 
 const APPLICATION_ID: &str = "sdkwork-image";
 
@@ -51,7 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 environment,
             )));
     }
-    let app = ComposedApiAssembly::try_compose("SDKWork Image API", vec![assembly])?
+    let mut module_registry = ApiModuleRegistry::new();
+    module_registry.add_modules(vec![assembly]);
+    let app = module_registry
+        .try_compose("SDKWork Image API")?
         .into_hosted(framework)
         .router;
     let bind = std::env::var("SDKWORK_IMAGE_APPLICATION_PUBLIC_INGRESS_BIND")?;

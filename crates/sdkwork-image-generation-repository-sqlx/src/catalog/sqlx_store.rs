@@ -43,7 +43,7 @@ impl ImageCatalogRepository for SqlxImageCatalogRepository {
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_preset");
                 let mut sql = format!(
                     r#"
@@ -122,7 +122,7 @@ WHERE tenant_id = $1
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_preset");
                 sqlx::query_as::<_, (String, String, String, Option<String>, String, String)>(
                     sqlx::AssertSqlSafe(format!(
@@ -173,7 +173,7 @@ WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NU
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_asset");
                 let rows = if let Some(search) = search {
                     let pattern = format!("%{search}%");
@@ -263,7 +263,7 @@ LIMIT $3 OFFSET $4
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_asset");
                 sqlx::query_as::<
                     _,
@@ -319,7 +319,7 @@ WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NU
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_gallery");
                 let item_table = ctx.table_name("image_gallery_item");
                 let rows = if let Some(search) = search {
@@ -414,7 +414,7 @@ LIMIT $3 OFFSET $4
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let gallery_table = ctx.table_name("image_gallery");
                 let asset_table = ctx.table_name("image_asset");
                 let item_table = ctx.table_name("image_gallery_item");
@@ -495,7 +495,7 @@ INSERT INTO {item_table} (
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let asset_table = ctx.table_name("image_asset");
                 let task_table = ctx.table_name("image_edit_task");
                 let source_asset_pk: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -548,17 +548,19 @@ INSERT INTO {task_table} (
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let task_table = ctx.table_name("image_edit_task");
                 let asset_table = ctx.table_name("image_asset");
-                sqlx::query_as::<_, (String, String, String, String, i32)>(sqlx::AssertSqlSafe(format!(
-                    r#"
+                sqlx::query_as::<_, (String, String, String, String, i32)>(sqlx::AssertSqlSafe(
+                    format!(
+                        r#"
 SELECT t.uuid, a.uuid, t.edit_type, t.prompt, t.job_status
 FROM {task_table} t
 JOIN {asset_table} a ON a.id = t.source_asset_id
 WHERE t.tenant_id = $1 AND t.organization_id = $2 AND t.uuid = $3 AND t.deleted_at IS NULL
 "#
-                )))
+                    ),
+                ))
                 .bind(tenant_id)
                 .bind(organization_id)
                 .bind(task_id.trim())

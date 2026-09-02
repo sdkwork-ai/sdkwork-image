@@ -1933,6 +1933,7 @@ dependencies = [
  "axum",
  "sdkwork-database-sqlx",
  "sdkwork-image-generation-host",
+ "sdkwork-image-generation-provider-spi",
  "sdkwork-routes-image-app-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
@@ -2036,7 +2037,6 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror 2.0.19",
- "tokio",
  "tracing",
 ]
 
@@ -2320,11 +2320,13 @@ name = "sdkwork-image-generation-provider-adapter"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum",
  "cloudrouter-open-sdk",
  "sdkwork-image-generation-provider-spi",
  "serde",
  "serde_json",
  "tokio",
+ "tower",
 ]
 
 [[package]]

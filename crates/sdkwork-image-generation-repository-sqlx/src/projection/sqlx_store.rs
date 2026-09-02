@@ -67,7 +67,7 @@ impl GenerationProjectionRepository for SqlxGenerationProjectionRepository {
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
                 let mut tx = pool.begin().await?;
                 sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -173,7 +173,7 @@ INSERT INTO {table} (
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 read_job_row_pg(pool, ctx, tenant_id, generation_id).await?
             }
         };
@@ -199,7 +199,7 @@ INSERT INTO {table} (
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 list_wire_json_pg(pool, ctx, tenant_id, limit, offset).await
             }
         }
@@ -233,7 +233,7 @@ INSERT INTO {table} (
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
                 let mut tx = pool.begin().await?;
                 let result = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -371,7 +371,7 @@ WHERE tenant_id = $2
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
                 sqlx::query(sqlx::AssertSqlSafe(format!(
                     r#"
@@ -405,7 +405,7 @@ WHERE tenant_id = $2
                         .to_string(),
                 ));
             }
-                        DatabasePool::Postgres(pool, ctx) => {
+            DatabasePool::Postgres(pool, ctx) => {
                 let table = ctx.table_name("image_generation_job");
                 sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
                     r#"SELECT COUNT(1) FROM {table} WHERE tenant_id = $1 AND organization_id = $2 AND uuid = $3 AND deleted_at IS NULL"#
