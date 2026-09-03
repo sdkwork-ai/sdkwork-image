@@ -1,4 +1,6 @@
 packages:
+  - "../sdkwork-ui/sdkwork-ui-mobile-react"
+  - "../sdkwork-assets/sdks/sdkwork-assets-app-sdk/sdkwork-assets-app-sdk-typescript"
   - "apps/sdkwork-image-common"
   - "apps/sdkwork-image-common/packages/*"
   - "apps/sdkwork-image-pc"
