@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "dependencies": {
+    "@sdkwork/sdk-common": "workspace:*"
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",
