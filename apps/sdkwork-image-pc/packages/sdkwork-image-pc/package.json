@@ -18,6 +18,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@sdkwork/sdk-common": "workspace:*"
+  },
   "peerDependencies": {
     "@sdkwork/image-contracts": "workspace:*",
     "@sdkwork/core-pc-react": "workspace:*",
