@@ -1,4 +1,4 @@
-import { resolveBaseUrl } from "@sdkwork/sdk-common";
+import { resolveBaseUrlWithAlignProtocol } from "@sdkwork/sdk-common";
 
 export type Environment = "development" | "test" | "staging" | "production";
 export type DeploymentMode = "saas" | "private" | "local" | "test";
@@ -15,10 +15,13 @@ export function resolveEnvironment(): RuntimeEnvironment {
   return {
     environment: env,
     deploymentMode: env === "development" ? "local" : "saas",
-    // Prefer explicit Vite overrides; otherwise resolve the shared
-    // SDKWORK_API_BASE_URL through @sdkwork/sdk-common (env + brand + protocol
-    // aware), eliminating the hardcoded localhost defaults.
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? resolveBaseUrl().url,
-    appBaseUrl: import.meta.env.VITE_APP_BASE_URL ?? resolveBaseUrl().url,
+    // Single-call §6.3 resolution: explicit Vite overrides win as candidates
+    // and the returned origins always follow the page scheme.
+    apiBaseUrl: resolveBaseUrlWithAlignProtocol({
+      baseUrls: import.meta.env.VITE_API_BASE_URL || undefined,
+    }).url,
+    appBaseUrl: resolveBaseUrlWithAlignProtocol({
+      baseUrls: import.meta.env.VITE_APP_BASE_URL || undefined,
+    }).url,
   };
 }
