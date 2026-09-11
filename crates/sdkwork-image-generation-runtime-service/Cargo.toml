@@ -1,9 +1,13 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-image-generation-runtime-service"
 version = "0.1.0"
 edition = "2021"
 description = "SDKWork image generation runtime orchestration and Drive import execution."
 
+
+[lints]
+workspace = true
 [lib]
 name = "sdkwork_image_generation_runtime_service"
 path = "src/lib.rs"

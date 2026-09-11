@@ -1,10 +1,14 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-image-database-host"
 edition = "2021"
 license = "MIT"
 version = "0.1.0"
 description = "SDKWork Image database lifecycle bootstrap."
 
+
+[lints]
+workspace = true
 [lib]
 name = "sdkwork_image_database_host"
 path = "src/lib.rs"

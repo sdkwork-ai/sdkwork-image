@@ -1,9 +1,13 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-image-generation-provider-adapter"
 version.workspace = true
 edition.workspace = true
 description = "Default SDK-backed adapter for the SDKWork image generation provider SPI."
 
+
+[lints]
+workspace = true
 [lib]
 name = "sdkwork_image_generation_provider_adapter"
 path = "src/lib.rs"

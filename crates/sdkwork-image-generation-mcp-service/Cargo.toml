@@ -1,9 +1,13 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-image-generation-mcp-service"
 version.workspace = true
 edition.workspace = true
 description = "Model Context Protocol adapter for SDKWork image generation."
 
+
+[lints]
+workspace = true
 [dependencies]
 rmcp.workspace = true
 schemars.workspace = true

@@ -1,9 +1,13 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-routes-image-app-api"
 version = "0.1.0"
 edition = "2021"
 description = "SDKWork image app-api Rust routes."
 
+
+[lints]
+workspace = true
 [lib]
 name = "sdkwork_routes_image_app_api"
 path = "src/lib.rs"

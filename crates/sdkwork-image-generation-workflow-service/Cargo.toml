@@ -1,9 +1,13 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-image-generation-workflow-service"
 version = "0.1.0"
 edition = "2021"
 description = "SDKWork image generation service orchestration contracts."
 
+
+[lints]
+workspace = true
 [lib]
 name = "sdkwork_image_generation_workflow_service"
 path = "src/lib.rs"
