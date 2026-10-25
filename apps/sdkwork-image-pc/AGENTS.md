@@ -36,7 +36,7 @@ Do not copy root standard text into this repository. If these relative paths do 
 - `CLAUDE.md`: Claude Code compatibility shim that points to `AGENTS.md`.
 - `GEMINI.md`: Gemini CLI compatibility shim that points to `AGENTS.md`.
 - `CODEX.md`: Codex compatibility shim that points to `AGENTS.md`.
-- `sdkwork.app.config.json`: application manifest.
+- `agent.app.config.json`: application manifest.
 - `.sdkwork/`: local skills, plugins, and workspace metadata.
 - `config/`: environment and runtime config templates.
 - `src/`: root shell bootstrap and composition boundary.
@@ -45,7 +45,7 @@ Do not copy root standard text into this repository. If these relative paths do 
 ## Spec Resolution Order
 
 1. Read this `AGENTS.md` and any nearer component-level `AGENTS.md`.
-2. Read `sdkwork.app.config.json`.
+2. Read `agent.app.config.json`.
 3. Read local `specs/` when present.
 4. Read `.sdkwork/README.md`, `.sdkwork/skills/`, `.sdkwork/plugins/` when relevant.
 5. Read `../../../sdkwork-specs/README.md` and task-specific root specs.

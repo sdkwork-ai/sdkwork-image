@@ -1,29 +1,38 @@
 {
   "schemaVersion": 3,
-  "kind": "sdkwork.app",
+  "kind": "agent.app",
   "app": {
-    "key": "app-cy3d99",
-    "name": "App Cy3d99",
-    "displayName": "App Cy3d99",
-    "officialWebsiteUrl": "https://sdkwork.com/apps/app-cy3d99",
-    "appType": "APP_HTML"
+    "key": "sdkwork-image",
+    "name": "Image",
+    "displayName": "SDKWork Image",
+    "description": "SDKWork Image application (bootstrap deploy layout).",
+    "appType": "SDK",
+    "officialWebsiteUrl": "https://sdkwork.com/apps/sdkwork-image"
   },
-  "backend": {},
+  "backend": {
+    "primaryLanguage": "rust",
+    "framework": "axum",
+    "appId": "sdkwork-image",
+    "serviceId": "sdkwork-image",
+    "owner": "sdkwork-image",
+    "domain": "image"
+  },
   "runtime": {
+    "family": "server",
+    "framework": "rust-axum",
     "supportedDeploymentProfiles": [
+      "standalone",
       "cloud"
     ],
-    "defaultDeploymentProfile": "cloud",
-    "family": "server",
-    "framework": "rust-axum"
+    "defaultDeploymentProfile": "standalone"
   },
   "media": {
     "icons": {
       "primary": {
-        "id": "app-cy3d99-primary-icon",
+        "id": "sdkwork-image-primary-icon",
         "type": "ICON",
         "purpose": "PRIMARY",
-        "url": "https://cdn.sdkwork.com/apps/app-cy3d99/assets/icon-1024.png",
+        "url": "https://cdn.sdkwork.com/apps/sdkwork-image/assets/icon-1024.png",
         "platform": "APP",
         "locale": "en-US",
         "width": 1024,
@@ -44,10 +53,10 @@
     },
     "screenshots": [
       {
-        "id": "app-cy3d99-web-screenshot",
+        "id": "sdkwork-image-web-screenshot",
         "type": "SCREENSHOT",
         "purpose": "CATALOG_SCREENSHOT",
-        "url": "https://cdn.sdkwork.com/apps/app-cy3d99/media/web-screenshot.png",
+        "url": "https://cdn.sdkwork.com/apps/sdkwork-image/media/web-screenshot.png",
         "platform": "WEB",
         "locale": "en-US",
         "deviceClass": "BROWSER",
@@ -57,21 +66,21 @@
         "format": "PNG",
         "fileSizeBytes": 1048576,
         "alphaChannel": false,
-        "caption": "App Cy3d99 product screenshot.",
+        "caption": "SDKWork Image product screenshot.",
         "sortOrder": 0,
         "enabled": true,
         "metadata": {
           "generatedPlaceholder": true,
-          "altText": "App Cy3d99 app screenshot."
+          "altText": "SDKWork Image app screenshot."
         }
       }
     ],
     "previews": [
       {
-        "id": "app-cy3d99-catalog-preview",
+        "id": "sdkwork-image-catalog-preview",
         "type": "PREVIEW_IMAGE",
         "purpose": "CATALOG_PREVIEW",
-        "url": "https://cdn.sdkwork.com/apps/app-cy3d99/media/preview-cover.png",
+        "url": "https://cdn.sdkwork.com/apps/sdkwork-image/media/preview-cover.png",
         "platform": "WEB",
         "locale": "en-US",
         "width": 1600,
@@ -79,12 +88,12 @@
         "format": "PNG",
         "fileSizeBytes": 786432,
         "alphaChannel": false,
-        "caption": "App Cy3d99 preview.",
+        "caption": "SDKWork Image preview.",
         "sortOrder": 0,
         "enabled": true,
         "metadata": {
           "generatedPlaceholder": true,
-          "altText": "App Cy3d99 preview cover."
+          "altText": "SDKWork Image preview cover."
         }
       }
     ],
@@ -101,44 +110,48 @@
     "installPlatforms": [
       "WEB"
     ],
-    "defaultPackageId": "linux-x64-cloud-server-tar-gz",
+    "defaultPackageId": "linux-x64-standalone-server-tar-gz",
     "installSkill": {
       "name": "sdkwork-skills-app"
     },
     "stores": [],
-    "storeUrl": "https://sdkwork.com/apps/app-cy3d99"
-  },
-  "environments": {
-    "development": {
-      "appRuntimeConfig": "config/app/runtime-env.development.example.json"
-    },
-    "test": {
-      "appRuntimeConfig": "config/app/runtime-env.test.example.json"
-    },
-    "staging": {
-      "appRuntimeConfig": "config/app/runtime-env.staging.example.json"
-    },
-    "production": {
-      "appRuntimeConfig": "config/app/runtime-env.production.example.json"
-    }
+    "storeUrl": "https://sdkwork.com/apps/sdkwork-image"
   },
   "artifacts": {
     "installConfig": {
-      "defaultPackageId": "linux-x64-cloud-server-tar-gz",
-      "installCommand": "sdkwork install app-cy3d99",
-      "launchCommand": "sdkwork open app-cy3d99",
-      "uninstallCommand": "sdkwork uninstall app-cy3d99",
+      "defaultPackageId": "linux-x64-standalone-server-tar-gz",
+      "installCommand": "sdkwork install sdkwork-image",
+      "launchCommand": "sdkwork open sdkwork-image",
+      "uninstallCommand": "sdkwork uninstall sdkwork-image",
       "packages": [
         {
-          "id": "linux-x64-cloud-server-tar-gz",
-          "name": "App Cy3d99 cloud server archive",
+          "id": "linux-x64-standalone-server-tar-gz",
+          "name": "Sdkwork Image standalone server archive",
           "sourceType": "BINARY_URL",
           "packageFormat": "TAR_GZ",
           "platform": "API",
-          "url": "https://cdn.sdkwork.com/apps/app-cy3d99/STABLE/0.1.0/linux-x64-cloud-server-tar-gz-0.1.0.tar.gz",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-image/STABLE/0.1.0/linux-x64-standalone-server-tar-gz-0.1.0.tar.gz",
           "architecture": "x64",
           "checksumAlgorithm": "SHA-256",
-          "checksum": "bd8fe2fa72af82f0f3f70d0918ec2049859940801ad1cc07abb882d699026676",
+          "checksum": "f2a03461faf3f77350adc4d6a93e7a44a04441ad515b5a79337240691214d409",
+          "deploymentProfile": "standalone",
+          "runtimeTarget": "server",
+          "profileBinding": "fixed",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": false
+          }
+        },
+        {
+          "id": "linux-x64-cloud-server-tar-gz",
+          "name": "Sdkwork Image cloud server archive",
+          "sourceType": "BINARY_URL",
+          "packageFormat": "TAR_GZ",
+          "platform": "API",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-image/STABLE/0.1.0/linux-x64-cloud-server-tar-gz-0.1.0.tar.gz",
+          "architecture": "x64",
+          "checksumAlgorithm": "SHA-256",
+          "checksum": "d5aee846e26627c282efaaab2e1378e188d31ee68d6c3a97236bfb85dfb63403",
           "deploymentProfile": "cloud",
           "runtimeTarget": "server",
           "profileBinding": "fixed",
@@ -160,15 +173,16 @@
       {
         "version": "0.1.0",
         "releaseChannel": "STABLE",
-        "title": "App Cy3d99 0.1.0",
-        "summary": "App Cy3d99 initialized standard release.",
-        "content": "Initial SDKWork App Standard v3 manifest for App Cy3d99.",
+        "title": "SDKWork Image 0.1.0",
+        "summary": "SDKWork Image initialized standard release.",
+        "content": "Initial SDKWork App Standard v3 manifest for SDKWork Image.",
         "highlights": [
           "SDKWork App Standard v3 configuration initialized",
           "platform_app projection metadata standardized",
           "Download package matrix normalized"
         ],
         "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
           "linux-x64-cloud-server-tar-gz"
         ],
         "publishedAt": "2026-05-07T00:00:00Z",
@@ -185,6 +199,7 @@
     "sbomRequired": false
   },
   "metadata": {
+    "deploymentConfig": "etc/sdkwork.deployment.config.json",
     "standardOwner": "sdkwork-platform"
   }
 }
