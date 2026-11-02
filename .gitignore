@@ -66,3 +66,7 @@ temp/
 *.temp
 .cache/
 .next/
+
+# Dart/Flutter local tool workspace (never commit)
+.dart_tool/
+**/.dart_tool/
