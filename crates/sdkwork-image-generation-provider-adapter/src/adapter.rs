@@ -23,30 +23,149 @@ use crate::routing::{
 
 #[derive(Clone)]
 pub struct ImageGenerationProviderAdapter {
-    client: SdkworkAiClient,
+    client: ImageClientSource,
     descriptor: ImageGenerationProviderDescriptor,
+}
+
+/// The client source for one adapter instance.
+///
+/// `Fixed` keeps a caller-supplied client (tests and hosts that pin one).
+/// `Reloading` re-resolves `cloudrouter` per call and rebuilds the client when
+/// the registry target changes, so a standalone image host follows an online
+/// failover without a restart (`DISCOVERY_SPEC.md` §12.1).
+#[derive(Clone)]
+enum ImageClientSource {
+    Fixed(SdkworkAiClient),
+    Reloading {
+        base_url: String,
+        api_key: Option<String>,
+        cache: std::sync::Arc<std::sync::RwLock<CachedImageClient>>,
+    },
+}
+
+#[derive(Clone)]
+struct CachedImageClient {
+    base_url: String,
+    client: std::sync::Arc<SdkworkAiClient>,
 }
 
 impl ImageGenerationProviderAdapter {
     pub fn new(client: SdkworkAiClient) -> Self {
         Self {
-            client,
-            descriptor: ImageGenerationProviderDescriptor {
-                id: IMAGE_GENERATION_PROVIDER_ADAPTER_ID.to_string(),
-                vendors: ["openai", "gpt-image", "midjourney", "nano-banana", "vidu"]
-                    .into_iter()
-                    .map(|vendor| ImageVendorId::new(vendor).expect("static vendor id"))
-                    .collect(),
-                capabilities: vec![
-                    ImageGenerationProviderCapability::TextToImage,
-                    ImageGenerationProviderCapability::ReferenceToImage,
-                    ImageGenerationProviderCapability::MultipleOutputs,
-                    ImageGenerationProviderCapability::NegativePrompt,
-                    ImageGenerationProviderCapability::Seed,
-                    ImageGenerationProviderCapability::Polling,
-                    ImageGenerationProviderCapability::Webhook,
-                ],
+            client: ImageClientSource::Fixed(client),
+            descriptor: Self::image_provider_descriptor(),
+        }
+    }
+
+    /// Build an adapter that resolves `cloudrouter` through the registry on
+    /// every call and rebuilds its client when the target changes.
+    pub fn from_settings(
+        base_url: impl Into<String>,
+        api_key: Option<String>,
+    ) -> Result<Self, ImageGenerationProviderError> {
+        let configured = base_url.into();
+        let initial = Self::build_image_client(&configured, api_key.as_deref())?;
+        Ok(Self {
+            client: ImageClientSource::Reloading {
+                base_url: configured,
+                api_key,
+                cache: std::sync::Arc::new(std::sync::RwLock::new(initial)),
             },
+            descriptor: Self::image_provider_descriptor(),
+        })
+    }
+
+    /// The base URL the adapter currently targets (registry or configured).
+    ///
+    /// Refreshes the cache first, so diagnostics observe an online failover
+    /// without waiting for the next image call.
+    pub fn base_url(&self) -> String {
+        match &self.client {
+            ImageClientSource::Fixed(_) => String::new(),
+            ImageClientSource::Reloading { cache, .. } => {
+                let _ = self.client();
+                cache
+                    .read()
+                    .map(|cached| cached.base_url.clone())
+                    .unwrap_or_default()
+            }
+        }
+    }
+
+    fn client(&self) -> Result<std::sync::Arc<SdkworkAiClient>, ImageGenerationProviderError> {
+        match &self.client {
+            ImageClientSource::Fixed(client) => Ok(std::sync::Arc::new(client.clone())),
+            ImageClientSource::Reloading {
+                base_url,
+                api_key,
+                cache,
+            } => {
+                let desired = sdkwork_utils_rust::service_base_url::registry_base_url_or(
+                    "cloudrouter",
+                    base_url,
+                );
+                {
+                    let guard = cache
+                        .read()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner);
+                    if guard.base_url == desired {
+                        return Ok(std::sync::Arc::clone(&guard.client));
+                    }
+                }
+                let fresh = Self::build_image_client(&desired, api_key.as_deref())?;
+                let mut guard = cache
+                    .write()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                guard.base_url = fresh.base_url;
+                guard.client = fresh.client;
+                Ok(std::sync::Arc::clone(&guard.client))
+            }
+        }
+    }
+
+    fn build_image_client(
+        configured_base_url: &str,
+        api_key: Option<&str>,
+    ) -> Result<CachedImageClient, ImageGenerationProviderError> {
+        let base_url = sdkwork_utils_rust::service_base_url::registry_base_url_or(
+            "cloudrouter",
+            configured_base_url,
+        );
+        if base_url.trim().is_empty() {
+            return Err(ImageGenerationProviderError::ProviderUnavailable(
+                "image generation requires a cloudrouter base URL".to_owned(),
+            ));
+        }
+        let client = SdkworkAiClient::new_with_base_url(base_url.clone()).map_err(|error| {
+            ImageGenerationProviderError::ProviderUnavailable(format!(
+                "image generation SDK client init failed: {error}"
+            ))
+        })?;
+        if let Some(api_key) = api_key.filter(|value| !value.trim().is_empty()) {
+            client.set_api_key(api_key);
+        }
+        Ok(CachedImageClient {
+            base_url,
+            client: std::sync::Arc::new(client),
+        })
+    }
+
+    fn image_provider_descriptor() -> ImageGenerationProviderDescriptor {
+        ImageGenerationProviderDescriptor {
+            id: IMAGE_GENERATION_PROVIDER_ADAPTER_ID.to_string(),
+            vendors: ["openai", "gpt-image", "midjourney", "nano-banana", "vidu"]
+                .into_iter()
+                .map(|vendor| ImageVendorId::new(vendor).expect("static vendor id"))
+                .collect(),
+            capabilities: vec![
+                ImageGenerationProviderCapability::TextToImage,
+                ImageGenerationProviderCapability::ReferenceToImage,
+                ImageGenerationProviderCapability::MultipleOutputs,
+                ImageGenerationProviderCapability::NegativePrompt,
+                ImageGenerationProviderCapability::Seed,
+                ImageGenerationProviderCapability::Polling,
+                ImageGenerationProviderCapability::Webhook,
+            ],
         }
     }
 
@@ -58,7 +177,7 @@ impl ImageGenerationProviderAdapter {
             ImageProviderOperation::OpenAiImageGeneration => {
                 let request = build_openai_image_generation_request(plan)?;
                 let response = self
-                    .client
+                    .client()?
                     .images()
                     .create_generation(&request)
                     .await
@@ -92,7 +211,7 @@ impl ImageGenerationProviderAdapter {
             ImageProviderOperation::MidjourneyImageGeneration => {
                 let request = build_midjourney_image_generation_request(plan)?;
                 let task = self
-                    .client
+                    .client()?
                     .images_midjourney()
                     .create_v1_images_generation(&request)
                     .await
@@ -116,7 +235,7 @@ impl ImageGenerationProviderAdapter {
             ImageProviderOperation::NanoBananaImageGeneration => {
                 let request = build_nano_banana_image_generation_request(plan)?;
                 let task = self
-                    .client
+                    .client()?
                     .images_nano_banana()
                     .create_generations(&request)
                     .await
@@ -140,7 +259,7 @@ impl ImageGenerationProviderAdapter {
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let request = build_vidu_reference_to_image_request(plan)?;
                 let task = self
-                    .client
+                    .client()?
                     .images_vidu()
                     .create_ent_v2_reference2image(&request)
                     .await
@@ -164,7 +283,7 @@ impl ImageGenerationProviderAdapter {
         match plan.provider_operation {
             ImageProviderOperation::MidjourneyImageGeneration => {
                 let task = self
-                    .client
+                    .client()?
                     .images_midjourney()
                     .list_v1_images_generations(provider_task_id)
                     .await
@@ -187,7 +306,7 @@ impl ImageGenerationProviderAdapter {
             }
             ImageProviderOperation::NanoBananaImageGeneration => {
                 let task = self
-                    .client
+                    .client()?
                     .images_nano_banana()
                     .retrieve_generations(provider_task_id)
                     .await
@@ -210,7 +329,7 @@ impl ImageGenerationProviderAdapter {
             }
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let task = self
-                    .client
+                    .client()?
                     .videos_vidu()
                     .list_ent_v2_tasks_creations(provider_task_id)
                     .await

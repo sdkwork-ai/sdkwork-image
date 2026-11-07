@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+#[cfg(test)]
 use cloudrouter_open_sdk::{SdkworkAiClient, SdkworkConfig};
 use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_image_generation_provider_adapter::{
@@ -186,20 +187,21 @@ fn provider_service_from_provider(
 }
 
 fn provider_service_from_env() -> Result<Arc<ProviderGenerationService>, String> {
-    let base_url = std::env::var("SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL")
+    let configured = std::env::var("SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL")
         .or_else(|_| std::env::var("CLOUDROUTER_OPEN_API_BASE_URL"))
-        .map_err(|_| {
-            "SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL (or CLOUDROUTER_OPEN_API_BASE_URL) is required"
-                .to_string()
-        })?;
-    let client = SdkworkAiClient::new(SdkworkConfig::new(base_url.trim()))
-        .map_err(|error| format!("cloud router client init failed: {error}"))?;
-    if let Ok(api_key) = std::env::var("SDKWORK_CLOUDROUTER_OPEN_API_KEY") {
-        if !api_key.trim().is_empty() {
-            client.set_api_key(api_key.trim());
-        }
-    }
-    let provider = Arc::new(ImageGenerationProviderAdapter::new(client));
+        .map(|value| value.trim().to_string())
+        .unwrap_or_default();
+    // The adapter re-resolves `cloudrouter` per call and rebuilds its client
+    // when the registry target changes (DISCOVERY_SPEC §12.1); the configured
+    // value remains the degradation fallback.
+    let api_key = std::env::var("SDKWORK_CLOUDROUTER_OPEN_API_KEY")
+        .ok()
+        .map(|value| value.trim().to_owned())
+        .filter(|value| !value.is_empty());
+    let provider = Arc::new(
+        ImageGenerationProviderAdapter::from_settings(configured, api_key)
+            .map_err(|error| format!("cloud router client init failed: {error}"))?,
+    );
     let registry = ImageGenerationProviderRegistry::builder()
         .register(provider)
         .map_err(|error| format!("image provider registration failed: {error}"))?
@@ -222,6 +224,7 @@ mod tests {
 
     #[test]
     fn host_wraps_provider_and_application_service() {
+        // registry:allow test-only loopback stub; no production call site.
         let client =
             SdkworkAiClient::new(SdkworkConfig::new("http://127.0.0.1:0")).expect("client");
         let provider = Arc::new(ImageGenerationProviderAdapter::new(client));

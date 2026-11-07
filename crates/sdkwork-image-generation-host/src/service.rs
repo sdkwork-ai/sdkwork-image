@@ -551,6 +551,7 @@ mod tests {
     #[test]
     fn service_accepts_injected_provider_service_and_in_memory_repository() {
         let client = cloudrouter_open_sdk::SdkworkAiClient::new(
+            // registry:allow test-only loopback stub; no production call site.
             cloudrouter_open_sdk::SdkworkConfig::new("http://127.0.0.1:0"),
         )
         .expect("client");

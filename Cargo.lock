@@ -2686,6 +2686,7 @@ dependencies = [
  "axum",
  "cloudrouter-open-sdk",
  "sdkwork-image-generation-provider-spi",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "tokio",
