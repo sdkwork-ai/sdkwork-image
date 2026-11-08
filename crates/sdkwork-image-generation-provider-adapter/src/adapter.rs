@@ -39,14 +39,10 @@ enum ImageClientSource {
     Reloading {
         base_url: String,
         api_key: Option<String>,
-        cache: std::sync::Arc<std::sync::RwLock<CachedImageClient>>,
+        clients: std::sync::Arc<
+            std::sync::RwLock<std::collections::HashMap<String, std::sync::Arc<SdkworkAiClient>>>,
+        >,
     },
-}
-
-#[derive(Clone)]
-struct CachedImageClient {
-    base_url: String,
-    client: std::sync::Arc<SdkworkAiClient>,
 }
 
 impl ImageGenerationProviderAdapter {
@@ -58,36 +54,31 @@ impl ImageGenerationProviderAdapter {
     }
 
     /// Build an adapter that resolves `cloudrouter` through the registry on
-    /// every call and rebuilds its client when the target changes.
+    /// every call and pools clients per resolved base URL.
     pub fn from_settings(
         base_url: impl Into<String>,
         api_key: Option<String>,
     ) -> Result<Self, ImageGenerationProviderError> {
         let configured = base_url.into();
-        let initial = Self::build_image_client(&configured, api_key.as_deref())?;
+        let (resolved, client) = Self::build_image_client(&configured, api_key.as_deref())?;
+        let mut clients = std::collections::HashMap::new();
+        clients.insert(resolved, client);
         Ok(Self {
             client: ImageClientSource::Reloading {
                 base_url: configured,
                 api_key,
-                cache: std::sync::Arc::new(std::sync::RwLock::new(initial)),
+                clients: std::sync::Arc::new(std::sync::RwLock::new(clients)),
             },
             descriptor: Self::image_provider_descriptor(),
         })
     }
 
     /// The base URL the adapter currently targets (registry or configured).
-    ///
-    /// Refreshes the cache first, so diagnostics observe an online failover
-    /// without waiting for the next image call.
     pub fn base_url(&self) -> String {
         match &self.client {
             ImageClientSource::Fixed(_) => String::new(),
-            ImageClientSource::Reloading { cache, .. } => {
-                let _ = self.client();
-                cache
-                    .read()
-                    .map(|cached| cached.base_url.clone())
-                    .unwrap_or_default()
+            ImageClientSource::Reloading { base_url, .. } => {
+                sdkwork_utils_rust::service_base_url::registry_base_url_or("cloudrouter", base_url)
             }
         }
     }
@@ -98,27 +89,29 @@ impl ImageGenerationProviderAdapter {
             ImageClientSource::Reloading {
                 base_url,
                 api_key,
-                cache,
+                clients,
             } => {
                 let desired = sdkwork_utils_rust::service_base_url::registry_base_url_or(
                     "cloudrouter",
                     base_url,
                 );
+                if let Some(client) = clients
+                    .read()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .get(&desired)
+                    .cloned()
                 {
-                    let guard = cache
-                        .read()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner);
-                    if guard.base_url == desired {
-                        return Ok(std::sync::Arc::clone(&guard.client));
-                    }
+                    return Ok(client);
                 }
-                let fresh = Self::build_image_client(&desired, api_key.as_deref())?;
-                let mut guard = cache
+                let (resolved, client) = Self::build_image_client(&desired, api_key.as_deref())?;
+                let mut guard = clients
                     .write()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
-                guard.base_url = fresh.base_url;
-                guard.client = fresh.client;
-                Ok(std::sync::Arc::clone(&guard.client))
+                if guard.len() >= 16 {
+                    guard.clear();
+                }
+                guard.insert(resolved, std::sync::Arc::clone(&client));
+                Ok(client)
             }
         }
     }
@@ -126,7 +119,7 @@ impl ImageGenerationProviderAdapter {
     fn build_image_client(
         configured_base_url: &str,
         api_key: Option<&str>,
-    ) -> Result<CachedImageClient, ImageGenerationProviderError> {
+    ) -> Result<(String, std::sync::Arc<SdkworkAiClient>), ImageGenerationProviderError> {
         let base_url = sdkwork_utils_rust::service_base_url::registry_base_url_or(
             "cloudrouter",
             configured_base_url,
@@ -144,10 +137,7 @@ impl ImageGenerationProviderAdapter {
         if let Some(api_key) = api_key.filter(|value| !value.trim().is_empty()) {
             client.set_api_key(api_key);
         }
-        Ok(CachedImageClient {
-            base_url,
-            client: std::sync::Arc::new(client),
-        })
+        Ok((base_url, std::sync::Arc::new(client)))
     }
 
     fn image_provider_descriptor() -> ImageGenerationProviderDescriptor {
