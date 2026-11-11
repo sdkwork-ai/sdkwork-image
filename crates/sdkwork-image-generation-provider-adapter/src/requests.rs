@@ -1,7 +1,4 @@
-use cloudrouter_open_sdk::{
-    MidjourneyImageGenerationRequest, NanoBananaImageGenerationRequest,
-    OpenAiImageGenerationRequest, ViduReferenceToImageRequest,
-};
+use cloudrouter_open_sdk::{OpenAiImageGenerationRequest, ViduReferenceToImageRequest};
 use sdkwork_image_generation_provider_spi::{
     ImageGenerationProviderError, ImageGenerationProviderResult, ImageProviderDispatchPlan,
 };
@@ -18,7 +15,6 @@ struct OpenAiVendorParameters {
 #[serde(deny_unknown_fields)]
 struct SeededVendorParameters {
     seed: Option<i64>,
-    style: Option<String>,
     payload: Option<String>,
 }
 
@@ -39,43 +35,7 @@ pub fn build_openai_image_generation_request(
             .response_format
             .or_else(|| plan.response_format.clone()),
         size: parameters.size.or_else(|| plan.size.clone()),
-    })
-}
-
-pub fn build_midjourney_image_generation_request(
-    plan: &ImageProviderDispatchPlan,
-) -> ImageGenerationProviderResult<MidjourneyImageGenerationRequest> {
-    let parameters: SeededVendorParameters =
-        decode_vendor_parameters(plan, "midjourney.image-generation.v1")?;
-    reject_payload_for_non_vidu(&parameters)?;
-    Ok(MidjourneyImageGenerationRequest {
-        aspect_ratio: aspect_ratio_from_size(plan.size.as_deref()),
-        callback_url: plan.callback_url.clone(),
-        model: plan.model.clone(),
-        prompt: prompt_with_optional_negative(plan),
-        seed: parameters.seed,
-        style: parameters.style.or_else(|| plan.quality.clone()),
-    })
-}
-
-pub fn build_nano_banana_image_generation_request(
-    plan: &ImageProviderDispatchPlan,
-) -> ImageGenerationProviderResult<NanoBananaImageGenerationRequest> {
-    let parameters: SeededVendorParameters =
-        decode_vendor_parameters(plan, "nano-banana.image-generation.v1")?;
-    if parameters.style.is_some() || parameters.payload.is_some() {
-        return Err(ImageGenerationProviderError::UnsupportedParameter(
-            "nano-banana only accepts seed in vendor parameters".to_string(),
-        ));
-    }
-    Ok(NanoBananaImageGenerationRequest {
-        aspect_ratio: aspect_ratio_from_size(plan.size.as_deref()),
-        callback_url: plan.callback_url.clone(),
-        images: (!plan.reference_images.is_empty()).then(|| plan.reference_images.clone()),
-        model: plan.model.clone(),
-        prompt: prompt_with_optional_negative(plan),
-        seed: parameters.seed,
-        size: plan.size.clone(),
+        ..Default::default()
     })
 }
 
@@ -87,7 +47,7 @@ pub fn build_vidu_reference_to_image_request(
     Ok(ViduReferenceToImageRequest {
         aspect_ratio: aspect_ratio_from_size(plan.size.as_deref()),
         callback_url: plan.callback_url.clone(),
-        images: plan.reference_images.clone(),
+        images: (!plan.reference_images.is_empty()).then(|| plan.reference_images.clone()),
         model: plan
             .model
             .clone()
@@ -95,7 +55,7 @@ pub fn build_vidu_reference_to_image_request(
         payload: parameters.payload,
         prompt: prompt_with_optional_negative(plan),
         seed: parameters.seed,
-        style: parameters.style.or_else(|| plan.quality.clone()),
+        ..Default::default()
     })
 }
 
@@ -125,17 +85,6 @@ where
             plan.provider_code
         ))
     })
-}
-
-fn reject_payload_for_non_vidu(
-    parameters: &SeededVendorParameters,
-) -> ImageGenerationProviderResult<()> {
-    if parameters.payload.is_some() {
-        return Err(ImageGenerationProviderError::UnsupportedParameter(
-            "payload is only supported by the vidu image adapter".to_string(),
-        ));
-    }
-    Ok(())
 }
 
 fn prompt_with_optional_negative(plan: &ImageProviderDispatchPlan) -> String {

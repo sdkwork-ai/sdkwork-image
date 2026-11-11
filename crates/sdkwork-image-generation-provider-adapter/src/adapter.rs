@@ -1,19 +1,16 @@
 use cloudrouter_open_sdk::SdkworkAiClient;
 use sdkwork_image_generation_provider_spi::{
-    normalize_openai_image_generation_outputs, normalize_provider_task_generation_result,
-    ImageGenerationCommand, ImageGenerationProvider, ImageGenerationProviderCapability,
-    ImageGenerationProviderDescriptor, ImageGenerationProviderError, ImageGenerationProviderResult,
-    ImageGenerationRuntimeStatus, ImageProviderDispatchPlan, ImageProviderOperation,
-    ImageProviderSubmission, ImageVendorId, NormalizedProviderGenerationResult,
-    OpenAiGeneratedImage, ProviderTaskSnapshot,
+    normalize_openai_image_generation_outputs, ImageGenerationCommand, ImageGenerationProvider,
+    ImageGenerationProviderCapability, ImageGenerationProviderDescriptor,
+    ImageGenerationProviderError, ImageGenerationProviderResult, ImageGenerationRuntimeStatus,
+    ImageProviderDispatchPlan, ImageProviderOperation, ImageProviderSubmission, ImageVendorId,
+    NormalizedProviderGenerationResult, OpenAiGeneratedImage,
 };
 
 use crate::normalization::{
     normalize_vidu_image_generation_task_result, normalize_vidu_task_creations_result,
-    provider_assets_from_generated_media, provider_error_from_sdk,
 };
 use crate::requests::{
-    build_midjourney_image_generation_request, build_nano_banana_image_generation_request,
     build_openai_image_generation_request, build_vidu_reference_to_image_request,
 };
 use crate::routing::{
@@ -143,7 +140,7 @@ impl ImageGenerationProviderAdapter {
     fn image_provider_descriptor() -> ImageGenerationProviderDescriptor {
         ImageGenerationProviderDescriptor {
             id: IMAGE_GENERATION_PROVIDER_ADAPTER_ID.to_string(),
-            vendors: ["openai", "gpt-image", "midjourney", "nano-banana", "vidu"]
+            vendors: ["openai", "gpt-image", "vidu"]
                 .into_iter()
                 .map(|vendor| ImageVendorId::new(vendor).expect("static vendor id"))
                 .collect(),
@@ -199,52 +196,14 @@ impl ImageGenerationProviderAdapter {
                 })
             }
             ImageProviderOperation::MidjourneyImageGeneration => {
-                let request = build_midjourney_image_generation_request(plan)?;
-                let task = self
-                    .client()?
-                    .images_midjourney()
-                    .create_v1_images_generation(&request)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
+                Err(ImageGenerationProviderError::UnsupportedCapability(
+                    "midjourney image generation".to_string(),
+                ))
             }
             ImageProviderOperation::NanoBananaImageGeneration => {
-                let request = build_nano_banana_image_generation_request(plan)?;
-                let task = self
-                    .client()?
-                    .images_nano_banana()
-                    .create_generations(&request)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
+                Err(ImageGenerationProviderError::UnsupportedCapability(
+                    "nano-banana image generation".to_string(),
+                ))
             }
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let request = build_vidu_reference_to_image_request(plan)?;
@@ -272,50 +231,14 @@ impl ImageGenerationProviderAdapter {
     ) -> ImageGenerationProviderResult<NormalizedProviderGenerationResult> {
         match plan.provider_operation {
             ImageProviderOperation::MidjourneyImageGeneration => {
-                let task = self
-                    .client()?
-                    .images_midjourney()
-                    .list_v1_images_generations(provider_task_id)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
+                Err(ImageGenerationProviderError::UnsupportedCapability(
+                    "midjourney image generation".to_string(),
+                ))
             }
             ImageProviderOperation::NanoBananaImageGeneration => {
-                let task = self
-                    .client()?
-                    .images_nano_banana()
-                    .retrieve_generations(provider_task_id)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
+                Err(ImageGenerationProviderError::UnsupportedCapability(
+                    "nano-banana image generation".to_string(),
+                ))
             }
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let task = self
