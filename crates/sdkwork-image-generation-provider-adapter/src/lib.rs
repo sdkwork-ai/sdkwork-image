@@ -17,7 +17,6 @@ pub use normalization::{
     normalize_vidu_image_generation_task_result, normalize_vidu_task_creations_result,
 };
 pub use requests::{
-    build_midjourney_image_generation_request, build_nano_banana_image_generation_request,
     build_openai_image_generation_request, build_vidu_reference_to_image_request,
     openai_image_generation_sdk_supports_output_count,
 };
