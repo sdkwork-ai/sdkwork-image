@@ -83,7 +83,14 @@ impl ImageGenerationServicePort for ImageGenerationService {
         &self,
         command: ImageGenerationCommand,
     ) -> ImageGenerationProviderResult<ImageProviderSubmission> {
-        let provider = self.providers.select_for_vendor(&command.vendor)?;
+        // Dispatch must use a caller-bound provider: selecting the registry entry
+        // directly would dispatch with the deployment's service identity
+        // (APP_SDK_INTEGRATION_SPEC.md §5.2.1) — the bug the caller-binding test
+        // pins down.
+        let provider = self
+            .providers
+            .select_for_vendor(&command.vendor)?
+            .with_caller(&self.caller);
         provider.validate(&command)?;
         provider.generate(&command).await
     }
