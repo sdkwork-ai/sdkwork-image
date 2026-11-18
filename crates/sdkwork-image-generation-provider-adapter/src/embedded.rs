@@ -13,12 +13,11 @@
 //! authentication/billing chain runs in-process, exactly as an external HTTP
 //! request would.
 
+use std::sync::Arc;
+
 use axum::body::Body;
 use axum::extract::Request;
-use cloudrouter_open_sdk::{
-    MidjourneyImageGenerationTask, NanoBananaImageGenerationTask, OpenAiImageList,
-    ViduImageGenerationTask, ViduTaskCreationsResponse,
-};
+use cloudrouter_open_sdk::{OpenAiImageList, ViduImageGenerationTask, ViduTaskCreationsResponse};
 use sdkwork_image_generation_provider_spi::{
     normalize_openai_image_generation_outputs, normalize_provider_task_generation_result,
     ImageGenerationCommand, ImageGenerationProvider, ImageGenerationProviderCapability,
@@ -33,11 +32,11 @@ use crate::normalization::{
     provider_assets_from_generated_media, provider_error_from_sdk,
 };
 use crate::requests::{
-    build_midjourney_image_generation_request, build_nano_banana_image_generation_request,
     build_openai_image_generation_request, build_vidu_reference_to_image_request,
 };
 use crate::routing::{provider_adapter_supports_retrieve_operation, resolve_sdk_operation_route};
 
+use sdkwork_utils_rust::caller_identity::CallerCredentials;
 use tower::ServiceExt;
 
 /// Provider id for the in-process CloudRouter dispatch adapter. Distinct from
@@ -64,6 +63,8 @@ pub struct CloudRouterEmbeddedImageGenerationAdapter {
     /// dispatcher). Clone is cheap; `oneshot` consumes the clone per dispatch.
     router: axum::Router,
     api_key: Option<String>,
+    /// Caller-bound identity for one dispatch; empty on a service-identity path.
+    caller: CallerCredentials,
     descriptor: ImageGenerationProviderDescriptor,
 }
 
@@ -72,9 +73,10 @@ impl CloudRouterEmbeddedImageGenerationAdapter {
         Self {
             router,
             api_key,
+            caller: CallerCredentials::default(),
             descriptor: ImageGenerationProviderDescriptor {
                 id: IMAGE_GENERATION_PROVIDER_CLOUDROUTER_EMBEDDED_ID.to_string(),
-                vendors: ["openai", "gpt-image", "midjourney", "nano-banana", "vidu"]
+                vendors: ["openai", "gpt-image", "vidu"]
                     .into_iter()
                     .map(|vendor| ImageVendorId::new(vendor).expect("static vendor id"))
                     .collect(),
@@ -141,56 +143,6 @@ impl CloudRouterEmbeddedImageGenerationAdapter {
                     error_message: None,
                 })
             }
-            ImageProviderOperation::MidjourneyImageGeneration => {
-                let request = build_midjourney_image_generation_request(plan)?;
-                let task: MidjourneyImageGenerationTask = self
-                    .dispatch_json(
-                        axum::http::Method::POST,
-                        MIDJOURNEY_IMAGES_GENERATIONS_PATH,
-                        &serde_json::to_value(&request).map_err(serde_error)?,
-                    )
-                    .await?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
-            ImageProviderOperation::NanoBananaImageGeneration => {
-                let request = build_nano_banana_image_generation_request(plan)?;
-                let task: NanoBananaImageGenerationTask = self
-                    .dispatch_json(
-                        axum::http::Method::POST,
-                        NANO_BANANA_IMAGES_GENERATIONS_PATH,
-                        &serde_json::to_value(&request).map_err(serde_error)?,
-                    )
-                    .await?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let request = build_vidu_reference_to_image_request(plan)?;
                 let task: ViduImageGenerationTask = self
@@ -202,6 +154,12 @@ impl CloudRouterEmbeddedImageGenerationAdapter {
                     .await?;
                 normalize_vidu_image_generation_task_result(&plan.provider_code, task)
                     .map_err(invalid_response)
+            }
+            ImageProviderOperation::MidjourneyImageGeneration
+            | ImageProviderOperation::NanoBananaImageGeneration => {
+                Err(ImageGenerationProviderError::UnsupportedCapability(
+                    "the cloudrouter open-api no longer publishes this image vendor".to_string(),
+                ))
             }
             ImageProviderOperation::ProviderNativeImageGeneration => {
                 Err(ImageGenerationProviderError::UnsupportedCapability(
@@ -217,54 +175,6 @@ impl CloudRouterEmbeddedImageGenerationAdapter {
         provider_task_id: &str,
     ) -> ImageGenerationProviderResult<NormalizedProviderGenerationResult> {
         match plan.provider_operation {
-            ImageProviderOperation::MidjourneyImageGeneration => {
-                let task: MidjourneyImageGenerationTask = self
-                    .dispatch_json(
-                        axum::http::Method::GET,
-                        &format!("{MIDJOURNEY_IMAGES_GENERATIONS_PATH}/{provider_task_id}"),
-                        &serde_json::Value::Null,
-                    )
-                    .await?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
-            ImageProviderOperation::NanoBananaImageGeneration => {
-                let task: NanoBananaImageGenerationTask = self
-                    .dispatch_json(
-                        axum::http::Method::GET,
-                        &format!("{NANO_BANANA_IMAGES_GENERATIONS_PATH}/{provider_task_id}"),
-                        &serde_json::Value::Null,
-                    )
-                    .await?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let task: ViduTaskCreationsResponse = self
                     .dispatch_json(
@@ -292,7 +202,13 @@ impl CloudRouterEmbeddedImageGenerationAdapter {
     ) -> ImageGenerationProviderResult<T> {
         let with_body = !body.is_null();
         let mut builder = Request::builder().method(method).uri(path);
-        if let Some(api_key) = self.api_key.as_deref() {
+        if !self.caller.is_empty() {
+            // A user-scoped dispatch authenticates as the caller; the embedded
+            // surface runs the same open-api auth chain as the HTTP transport.
+            for (name, value) in self.caller.wire_headers() {
+                builder = builder.header(name, value);
+            }
+        } else if let Some(api_key) = self.api_key.as_deref() {
             builder = builder.header("authorization", format!("Bearer {api_key}"));
         }
         if with_body {
@@ -351,6 +267,15 @@ fn serde_error(error: serde_json::Error) -> ImageGenerationProviderError {
 
 #[async_trait::async_trait]
 impl ImageGenerationProvider for CloudRouterEmbeddedImageGenerationAdapter {
+    fn with_caller(&self, caller: &CallerCredentials) -> Arc<dyn ImageGenerationProvider> {
+        Arc::new(CloudRouterEmbeddedImageGenerationAdapter {
+            router: self.router.clone(),
+            api_key: self.api_key.clone(),
+            caller: caller.clone(),
+            descriptor: self.descriptor.clone(),
+        })
+    }
+
     fn descriptor(&self) -> &ImageGenerationProviderDescriptor {
         &self.descriptor
     }

@@ -82,7 +82,16 @@ async fn create_generation(
             )
         }
     };
-    match state.host.service().create_generation(&subject, body).await {
+    match state
+        .host
+        .service()
+        .create_generation(
+            &subject,
+            sdkwork_web_core::current_caller_credentials(),
+            body,
+        )
+        .await
+    {
         Ok(item) => success_item(context.as_ref().map(|Extension(ctx)| ctx), item),
         Err(error) => map_service_error(context.as_ref().map(|Extension(ctx)| ctx), error),
     }

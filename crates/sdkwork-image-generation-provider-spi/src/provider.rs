@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use async_trait::async_trait;
+use sdkwork_utils_rust::caller_identity::CallerCredentials;
 
 use crate::{
     ImageGenerationCommand, ImageGenerationProviderResult, ImageProviderDispatchPlan,
@@ -44,6 +47,14 @@ pub struct ImageProviderSubmission {
 
 #[async_trait]
 pub trait ImageGenerationProvider: Send + Sync {
+    /// Returns a provider bound to the caller's verified dual credentials for
+    /// one user-scoped dispatch (`APP_SDK_INTEGRATION_SPEC.md` §5.2.1).
+    ///
+    /// The bound provider keeps the same registry target and client pool; its
+    /// clients are keyed by `(base URL, credential fingerprint)` so one caller's
+    /// client can never be reused with another caller's tokens.
+    fn with_caller(&self, caller: &CallerCredentials) -> Arc<dyn ImageGenerationProvider>;
+
     fn descriptor(&self) -> &ImageGenerationProviderDescriptor;
 
     fn validate(&self, command: &ImageGenerationCommand) -> ImageGenerationProviderResult<()>;

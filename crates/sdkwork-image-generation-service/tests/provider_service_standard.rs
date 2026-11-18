@@ -15,6 +15,15 @@ struct FakeImageProvider {
 
 #[async_trait::async_trait]
 impl ImageGenerationProvider for FakeImageProvider {
+    fn with_caller(
+        &self,
+        _caller: &sdkwork_utils_rust::caller_identity::CallerCredentials,
+    ) -> Arc<dyn ImageGenerationProvider> {
+        Arc::new(FakeImageProvider {
+            descriptor: self.descriptor.clone(),
+        })
+    }
+
     fn descriptor(&self) -> &ImageGenerationProviderDescriptor {
         &self.descriptor
     }

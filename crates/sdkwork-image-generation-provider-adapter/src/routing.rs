@@ -18,18 +18,12 @@ pub fn resolve_sdk_operation_route(operation: ImageProviderOperation) -> Option<
             retrieve_resource: None,
             retrieve_method: None,
         }),
-        ImageProviderOperation::MidjourneyImageGeneration => Some(SdkOperationRoute {
-            create_resource: "images_midjourney",
-            create_method: "create_v1_images_generation",
-            retrieve_resource: Some("images_midjourney"),
-            retrieve_method: Some("list_v1_images_generations"),
-        }),
-        ImageProviderOperation::NanoBananaImageGeneration => Some(SdkOperationRoute {
-            create_resource: "images_nano_banana",
-            create_method: "create_generations",
-            retrieve_resource: Some("images_nano_banana"),
-            retrieve_method: Some("retrieve_generations"),
-        }),
+        // The regenerated cloudrouter open-api no longer publishes the
+        // midjourney / nano-banana image operations (the SDK models and client
+        // accessors were removed with them), so these operations have no route
+        // and `validate` reports them as an unsupported capability.
+        ImageProviderOperation::MidjourneyImageGeneration
+        | ImageProviderOperation::NanoBananaImageGeneration => None,
         ImageProviderOperation::ViduReferenceToImageGeneration => Some(SdkOperationRoute {
             create_resource: "images_vidu",
             create_method: "create_ent_v2_reference2image",

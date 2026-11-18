@@ -13,6 +13,15 @@ struct ContractProvider {
 
 #[async_trait::async_trait]
 impl ImageGenerationProvider for ContractProvider {
+    fn with_caller(
+        &self,
+        _caller: &sdkwork_utils_rust::caller_identity::CallerCredentials,
+    ) -> Arc<dyn ImageGenerationProvider> {
+        Arc::new(ContractProvider {
+            descriptor: self.descriptor.clone(),
+        })
+    }
+
     fn descriptor(&self) -> &ImageGenerationProviderDescriptor {
         &self.descriptor
     }

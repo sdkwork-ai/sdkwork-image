@@ -17,6 +17,7 @@ use sdkwork_image_generation_workflow_service::{
     finalize_persistence_after_drive_import, plan_generation_create_persistence_plan_with_dispatch,
     plan_generation_refresh_persistence_plan, ImageGenerationScope, OutputDriveImportState,
 };
+use sdkwork_utils_rust::caller_identity::CallerCredentials;
 use sdkwork_utils_rust::uuid;
 
 use crate::subject::RuntimeSubject;
@@ -65,14 +66,18 @@ impl ImageGenerationService {
     pub async fn create_generation(
         &self,
         subject: &RuntimeSubject,
+        caller: CallerCredentials,
         command: ImageGenerationCommandWire,
     ) -> Result<ImageGenerationWire, ImageGenerationServiceError> {
         let domain_command = map_create_command(command)?;
         let generation_id = uuid();
         let now_epoch_ms = current_epoch_ms();
         let scope = runtime_scope(subject);
+        // APP_SDK_INTEGRATION_SPEC §5.2.1: the dispatch runs as the caller; the
+        // background refresh path keeps the declared service identity.
+        let provider_service = self.provider_service.with_caller(&caller);
         let runtime = execute_create_generation_dispatch(
-            self.provider_service.as_ref(),
+            &provider_service,
             ImageGenerationCreateRuntimeInput {
                 scope: scope.clone(),
                 generation_id: generation_id.clone(),

@@ -1,3 +1,8 @@
+use std::sync::Arc;
+// identity:service - a caller-bound dispatch carries the caller's dual tokens
+// (with_caller), while the caller-less background/retrieval path presents the
+// deployment's declared CloudRouter open-api key as its service identity.
+
 use cloudrouter_open_sdk::SdkworkAiClient;
 use sdkwork_image_generation_provider_spi::{
     normalize_openai_image_generation_outputs, normalize_provider_task_generation_result,
@@ -7,19 +12,27 @@ use sdkwork_image_generation_provider_spi::{
     ImageProviderSubmission, ImageVendorId, NormalizedProviderGenerationResult,
     OpenAiGeneratedImage, ProviderTaskSnapshot,
 };
+use sdkwork_utils_rust::caller_identity::{CallerCredentials, CallerTokenKind};
 
 use crate::normalization::{
     normalize_vidu_image_generation_task_result, normalize_vidu_task_creations_result,
     provider_assets_from_generated_media, provider_error_from_sdk,
 };
 use crate::requests::{
-    build_midjourney_image_generation_request, build_nano_banana_image_generation_request,
     build_openai_image_generation_request, build_vidu_reference_to_image_request,
 };
 use crate::routing::{
     provider_adapter_supports_retrieve_operation, resolve_sdk_operation_route,
     IMAGE_GENERATION_PROVIDER_ADAPTER_ID,
 };
+
+/// Upper bound on the per-`(base URL, credential)` client pool.
+const MAX_POOLED_IMAGE_CLIENTS: usize = 64;
+
+/// Pool key: the resolved target plus a non-reversible credential fingerprint.
+fn client_key(base_url: &str, caller: &CallerCredentials) -> String {
+    format!("{base_url}|{}", caller.fingerprint())
+}
 
 #[derive(Clone)]
 pub struct ImageGenerationProviderAdapter {
@@ -39,9 +52,8 @@ enum ImageClientSource {
     Reloading {
         base_url: String,
         api_key: Option<String>,
-        clients: std::sync::Arc<
-            std::sync::RwLock<std::collections::HashMap<String, std::sync::Arc<SdkworkAiClient>>>,
-        >,
+        caller: CallerCredentials,
+        clients: Arc<std::sync::RwLock<std::collections::HashMap<String, Arc<SdkworkAiClient>>>>,
     },
 }
 
@@ -60,14 +72,19 @@ impl ImageGenerationProviderAdapter {
         api_key: Option<String>,
     ) -> Result<Self, ImageGenerationProviderError> {
         let configured = base_url.into();
-        let (resolved, client) = Self::build_image_client(&configured, api_key.as_deref())?;
+        let (resolved, client) = Self::build_image_client(
+            &configured,
+            api_key.as_deref(),
+            &CallerCredentials::default(),
+        )?;
         let mut clients = std::collections::HashMap::new();
         clients.insert(resolved, client);
         Ok(Self {
             client: ImageClientSource::Reloading {
                 base_url: configured,
                 api_key,
-                clients: std::sync::Arc::new(std::sync::RwLock::new(clients)),
+                caller: CallerCredentials::default(),
+                clients: Arc::new(std::sync::RwLock::new(clients)),
             },
             descriptor: Self::image_provider_descriptor(),
         })
@@ -89,28 +106,31 @@ impl ImageGenerationProviderAdapter {
             ImageClientSource::Reloading {
                 base_url,
                 api_key,
+                caller,
                 clients,
             } => {
                 let desired = sdkwork_utils_rust::service_base_url::registry_base_url_or(
                     "cloudrouter",
                     base_url,
                 );
+                let key = client_key(&desired, caller);
                 if let Some(client) = clients
                     .read()
                     .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .get(&desired)
+                    .get(&key)
                     .cloned()
                 {
                     return Ok(client);
                 }
-                let (resolved, client) = Self::build_image_client(&desired, api_key.as_deref())?;
+                let (resolved, client) =
+                    Self::build_image_client(&desired, api_key.as_deref(), caller)?;
                 let mut guard = clients
                     .write()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
-                if guard.len() >= 16 {
+                if guard.len() >= MAX_POOLED_IMAGE_CLIENTS {
                     guard.clear();
                 }
-                guard.insert(resolved, std::sync::Arc::clone(&client));
+                guard.insert(resolved, Arc::clone(&client));
                 Ok(client)
             }
         }
@@ -119,7 +139,8 @@ impl ImageGenerationProviderAdapter {
     fn build_image_client(
         configured_base_url: &str,
         api_key: Option<&str>,
-    ) -> Result<(String, std::sync::Arc<SdkworkAiClient>), ImageGenerationProviderError> {
+        caller: &CallerCredentials,
+    ) -> Result<(String, Arc<SdkworkAiClient>), ImageGenerationProviderError> {
         let base_url = sdkwork_utils_rust::service_base_url::registry_base_url_or(
             "cloudrouter",
             configured_base_url,
@@ -134,16 +155,28 @@ impl ImageGenerationProviderAdapter {
                 "image generation SDK client init failed: {error}"
             ))
         })?;
-        if let Some(api_key) = api_key.filter(|value| !value.trim().is_empty()) {
+        if !caller.is_empty() {
+            // A user-scoped dispatch authenticates as the caller; the deployment
+            // API key never accompanies it (APP_SDK_INTEGRATION_SPEC §5.2.1).
+            caller.apply_typed(|kind, token| match kind {
+                CallerTokenKind::Auth => {
+                    client.set_auth_token(token);
+                }
+                CallerTokenKind::Access => {
+                    client.set_access_token(token);
+                }
+            });
+        } else if let Some(api_key) = api_key.filter(|value| !value.trim().is_empty()) {
+            // Declared service identity for background/worker dispatch only.
             client.set_api_key(api_key);
         }
-        Ok((base_url, std::sync::Arc::new(client)))
+        Ok((client_key(&base_url, caller), Arc::new(client)))
     }
 
     fn image_provider_descriptor() -> ImageGenerationProviderDescriptor {
         ImageGenerationProviderDescriptor {
             id: IMAGE_GENERATION_PROVIDER_ADAPTER_ID.to_string(),
-            vendors: ["openai", "gpt-image", "midjourney", "nano-banana", "vidu"]
+            vendors: ["openai", "gpt-image", "vidu"]
                 .into_iter()
                 .map(|vendor| ImageVendorId::new(vendor).expect("static vendor id"))
                 .collect(),
@@ -198,54 +231,6 @@ impl ImageGenerationProviderAdapter {
                     error_message: None,
                 })
             }
-            ImageProviderOperation::MidjourneyImageGeneration => {
-                let request = build_midjourney_image_generation_request(plan)?;
-                let task = self
-                    .client()?
-                    .images_midjourney()
-                    .create_v1_images_generation(&request)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
-            ImageProviderOperation::NanoBananaImageGeneration => {
-                let request = build_nano_banana_image_generation_request(plan)?;
-                let task = self
-                    .client()?
-                    .images_nano_banana()
-                    .create_generations(&request)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let request = build_vidu_reference_to_image_request(plan)?;
                 let task = self
@@ -256,6 +241,12 @@ impl ImageGenerationProviderAdapter {
                     .map_err(map_sdk_error)?;
                 normalize_vidu_image_generation_task_result(&plan.provider_code, task)
                     .map_err(invalid_response)
+            }
+            ImageProviderOperation::MidjourneyImageGeneration
+            | ImageProviderOperation::NanoBananaImageGeneration => {
+                Err(ImageGenerationProviderError::UnsupportedCapability(
+                    "the cloudrouter open-api no longer publishes this image vendor".to_string(),
+                ))
             }
             ImageProviderOperation::ProviderNativeImageGeneration => {
                 Err(ImageGenerationProviderError::UnsupportedCapability(
@@ -271,52 +262,6 @@ impl ImageGenerationProviderAdapter {
         provider_task_id: &str,
     ) -> ImageGenerationProviderResult<NormalizedProviderGenerationResult> {
         match plan.provider_operation {
-            ImageProviderOperation::MidjourneyImageGeneration => {
-                let task = self
-                    .client()?
-                    .images_midjourney()
-                    .list_v1_images_generations(provider_task_id)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
-            ImageProviderOperation::NanoBananaImageGeneration => {
-                let task = self
-                    .client()?
-                    .images_nano_banana()
-                    .retrieve_generations(provider_task_id)
-                    .await
-                    .map_err(map_sdk_error)?;
-                normalize_provider_task_generation_result(
-                    &plan.provider_code,
-                    ProviderTaskSnapshot {
-                        task_id: task.task_id,
-                        id: task.id,
-                        status: task.status,
-                        state: task.state,
-                        model: task.model,
-                        images: provider_assets_from_generated_media(
-                            task.images.unwrap_or_default(),
-                        ),
-                        error: task.error.map(provider_error_from_sdk),
-                    },
-                )
-                .map_err(invalid_response)
-            }
             ImageProviderOperation::ViduReferenceToImageGeneration => {
                 let task = self
                     .client()?
@@ -336,6 +281,28 @@ impl ImageGenerationProviderAdapter {
 
 #[async_trait::async_trait]
 impl ImageGenerationProvider for ImageGenerationProviderAdapter {
+    fn with_caller(&self, caller: &CallerCredentials) -> Arc<dyn ImageGenerationProvider> {
+        match &self.client {
+            ImageClientSource::Reloading {
+                base_url,
+                api_key,
+                clients,
+                ..
+            } => Arc::new(ImageGenerationProviderAdapter {
+                client: ImageClientSource::Reloading {
+                    base_url: base_url.clone(),
+                    api_key: api_key.clone(),
+                    caller: caller.clone(),
+                    clients: Arc::clone(clients),
+                },
+                descriptor: self.descriptor.clone(),
+            }),
+            // A fixed client is an explicitly pinned identity (tests / hosts
+            // that inject one); it is not re-credentialed per caller.
+            ImageClientSource::Fixed(_) => Arc::new(self.clone()),
+        }
+    }
+
     fn descriptor(&self) -> &ImageGenerationProviderDescriptor {
         &self.descriptor
     }
@@ -438,4 +405,30 @@ fn map_sdk_error(error: cloudrouter_open_sdk::SdkworkError) -> ImageGenerationPr
 
 fn invalid_response(message: &'static str) -> ImageGenerationProviderError {
     ImageGenerationProviderError::InvalidProviderResponse(message.to_string())
+}
+
+#[cfg(test)]
+mod caller_identity_tests {
+    use super::*;
+
+    #[test]
+    fn the_client_pool_key_separates_callers_at_the_same_target() {
+        let caller_a =
+            CallerCredentials::new(Some("auth-a".to_owned()), Some("access-a".to_owned()));
+        let caller_b =
+            CallerCredentials::new(Some("auth-b".to_owned()), Some("access-b".to_owned()));
+        let base = "https://cloudrouter.example.com";
+
+        assert_ne!(client_key(base, &caller_a), client_key(base, &caller_b));
+        assert_eq!(client_key(base, &caller_a), client_key(base, &caller_a));
+        assert!(
+            !client_key(base, &caller_a).contains("auth-a"),
+            "the pool key must not leak the credential"
+        );
+        // A service-identity (empty caller) client gets its own stable key too,
+        // so it can never be reused for a caller-bound dispatch.
+        let service_key = client_key(base, &CallerCredentials::default());
+        assert!(service_key.starts_with(base));
+        assert_ne!(service_key, client_key(base, &caller_a));
+    }
 }

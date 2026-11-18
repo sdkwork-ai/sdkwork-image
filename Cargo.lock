@@ -2495,6 +2495,7 @@ dependencies = [
  "jsonwebtoken",
  "reqwest 0.13.5",
  "sdkwork-utils-rust",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
  "tokio",
@@ -2698,6 +2699,7 @@ name = "sdkwork-image-generation-provider-spi"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "thiserror 2.0.19",
@@ -2751,6 +2753,7 @@ dependencies = [
  "async-trait",
  "sdkwork-drive-workspace-service",
  "sdkwork-image-generation-provider-spi",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "tokio",

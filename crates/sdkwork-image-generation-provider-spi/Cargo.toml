@@ -13,6 +13,7 @@ name = "sdkwork_image_generation_provider_spi"
 path = "src/lib.rs"
 
 [dependencies]
+sdkwork-utils-rust.workspace = true
 async-trait = "0.1"
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

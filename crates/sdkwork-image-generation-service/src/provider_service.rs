@@ -6,6 +6,7 @@ use sdkwork_image_generation_provider_spi::{
     ImageGenerationProviderRegistry, ImageGenerationProviderResult, ImageProviderDispatchPlan,
     ImageProviderSubmission, ImageVendorId, NormalizedProviderGenerationResult,
 };
+use sdkwork_utils_rust::caller_identity::CallerCredentials;
 
 #[async_trait]
 pub trait ImageGenerationServicePort: Send + Sync {
@@ -32,12 +33,28 @@ pub trait ImageGenerationServicePort: Send + Sync {
 #[derive(Clone)]
 pub struct ImageGenerationService {
     providers: Arc<ImageGenerationProviderRegistry>,
+    /// The caller whose dual tokens a user-scoped dispatch must carry. Empty on
+    /// a background/worker path that uses the declared service identity.
+    caller: CallerCredentials,
 }
 
 impl ImageGenerationService {
     pub fn new(providers: ImageGenerationProviderRegistry) -> Self {
         Self {
             providers: Arc::new(providers),
+            caller: CallerCredentials::default(),
+        }
+    }
+
+    /// Binds this service to the verified caller of one request
+    /// (`APP_SDK_INTEGRATION_SPEC.md` §5.2.1). Each dispatch then selects a
+    /// caller-bound provider; a caller-less service keeps the declared service
+    /// identity for background work.
+    #[must_use]
+    pub fn with_caller(&self, caller: &CallerCredentials) -> Self {
+        Self {
+            providers: Arc::clone(&self.providers),
+            caller: caller.clone(),
         }
     }
 
@@ -48,10 +65,15 @@ impl ImageGenerationService {
         Arc<dyn sdkwork_image_generation_provider_spi::ImageGenerationProvider>,
     > {
         if !dispatch_plan.provider_id.trim().is_empty() {
-            return self.providers.select_by_id(&dispatch_plan.provider_id);
+            return self
+                .providers
+                .select_by_id(&dispatch_plan.provider_id)
+                .map(|provider| provider.with_caller(&self.caller));
         }
         let vendor = ImageVendorId::new(&dispatch_plan.provider_code)?;
-        self.providers.select_for_vendor(&vendor)
+        self.providers
+            .select_for_vendor(&vendor)
+            .map(|provider| provider.with_caller(&self.caller))
     }
 }
 
