@@ -15,7 +15,10 @@
     "appId": "sdkwork-image",
     "serviceId": "sdkwork-image",
     "owner": "sdkwork-image",
-    "domain": "image"
+    "domain": "image",
+    "accessTokenPermissionScope": [
+      "iam:self"
+    ]
   },
   "runtime": {
     "family": "server",
