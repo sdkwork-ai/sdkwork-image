@@ -5,18 +5,16 @@ use std::sync::Arc;
 
 use cloudrouter_open_sdk::SdkworkAiClient;
 use sdkwork_image_generation_provider_spi::{
-    normalize_openai_image_generation_outputs, normalize_provider_task_generation_result,
-    ImageGenerationCommand, ImageGenerationProvider, ImageGenerationProviderCapability,
-    ImageGenerationProviderDescriptor, ImageGenerationProviderError, ImageGenerationProviderResult,
-    ImageGenerationRuntimeStatus, ImageProviderDispatchPlan, ImageProviderOperation,
-    ImageProviderSubmission, ImageVendorId, NormalizedProviderGenerationResult,
-    OpenAiGeneratedImage, ProviderTaskSnapshot,
+    normalize_openai_image_generation_outputs, ImageGenerationCommand, ImageGenerationProvider,
+    ImageGenerationProviderCapability, ImageGenerationProviderDescriptor,
+    ImageGenerationProviderError, ImageGenerationProviderResult, ImageGenerationRuntimeStatus,
+    ImageProviderDispatchPlan, ImageProviderOperation, ImageProviderSubmission, ImageVendorId,
+    NormalizedProviderGenerationResult, OpenAiGeneratedImage,
 };
 use sdkwork_utils_rust::caller_identity::{CallerCredentials, CallerTokenKind};
 
 use crate::normalization::{
     normalize_vidu_image_generation_task_result, normalize_vidu_task_creations_result,
-    provider_assets_from_generated_media, provider_error_from_sdk,
 };
 use crate::requests::{
     build_openai_image_generation_request, build_vidu_reference_to_image_request,

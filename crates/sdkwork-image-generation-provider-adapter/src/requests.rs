@@ -15,7 +15,6 @@ struct OpenAiVendorParameters {
 #[serde(deny_unknown_fields)]
 struct SeededVendorParameters {
     seed: Option<i64>,
-    style: Option<String>,
     payload: Option<String>,
 }
 

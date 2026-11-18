@@ -19,17 +19,15 @@ use axum::body::Body;
 use axum::extract::Request;
 use cloudrouter_open_sdk::{OpenAiImageList, ViduImageGenerationTask, ViduTaskCreationsResponse};
 use sdkwork_image_generation_provider_spi::{
-    normalize_openai_image_generation_outputs, normalize_provider_task_generation_result,
-    ImageGenerationCommand, ImageGenerationProvider, ImageGenerationProviderCapability,
-    ImageGenerationProviderDescriptor, ImageGenerationProviderError, ImageGenerationProviderResult,
-    ImageGenerationRuntimeStatus, ImageProviderDispatchPlan, ImageProviderOperation,
-    ImageProviderSubmission, ImageVendorId, NormalizedProviderGenerationResult,
-    OpenAiGeneratedImage, ProviderTaskSnapshot,
+    normalize_openai_image_generation_outputs, ImageGenerationCommand, ImageGenerationProvider,
+    ImageGenerationProviderCapability, ImageGenerationProviderDescriptor,
+    ImageGenerationProviderError, ImageGenerationProviderResult, ImageGenerationRuntimeStatus,
+    ImageProviderDispatchPlan, ImageProviderOperation, ImageProviderSubmission, ImageVendorId,
+    NormalizedProviderGenerationResult, OpenAiGeneratedImage,
 };
 
 use crate::normalization::{
     normalize_vidu_image_generation_task_result, normalize_vidu_task_creations_result,
-    provider_assets_from_generated_media, provider_error_from_sdk,
 };
 use crate::requests::{
     build_openai_image_generation_request, build_vidu_reference_to_image_request,
@@ -52,8 +50,6 @@ const MAX_RESPONSE_BODY_BYTES: usize = 16 * 1024 * 1024;
 // Open-api operation paths, mirroring the generated SDK's `ai_path` prefixing
 // (`API_PREFIX = "/v1"`). Keep in sync with `resolve_sdk_operation_route`.
 const OPENAI_IMAGES_GENERATIONS_PATH: &str = "/v1/images/generations";
-const MIDJOURNEY_IMAGES_GENERATIONS_PATH: &str = "/v1/midjourney/v1/images/generations";
-const NANO_BANANA_IMAGES_GENERATIONS_PATH: &str = "/v1/nano-banana/v1/images/generations";
 const VIDU_REFERENCE_TO_IMAGE_PATH: &str = "/v1/vidu/ent/v2/reference2image";
 
 /// In-process CloudRouter open-api dispatch adapter.
